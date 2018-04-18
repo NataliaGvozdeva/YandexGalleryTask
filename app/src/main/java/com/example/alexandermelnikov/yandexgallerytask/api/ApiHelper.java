@@ -36,7 +36,7 @@ public class ApiHelper {
         mService = retrofit.create(ApiService.class);
     }
 
-    public void getImages(String phrase, String sort) {
+    public void getImages(String phrase, String sort, final ImagesResultHandler handler) {
         mService.getImages(Constants.API_BASE_FIELDS, sort, phrase, Constants.API_KEY).enqueue(new Callback<ResponseRoot>() {
 
             @Override
@@ -44,8 +44,7 @@ public class ApiHelper {
                 Log.d("API", response.toString());
                 if (response.body() != null){
                     List<Image> images = response.body().getImages();
-                    for (int i = 0; i < images.size(); i++)
-                        Log.d(TAG, "" + i + ": " +images.get(i).getTitle());
+                    handler.onImagesResultPassed(images);
                 }
             }
 

@@ -13,4 +13,7 @@ public interface BaseView extends MvpView {
     @StateStrategyType(SkipStrategy.class)
     void attachInputListeners();
 
+    @StateStrategyType(SkipStrategy.class)
+    void dettachInputListeners();
+
 }

@@ -16,10 +16,6 @@ import retrofit2.http.Query;
 
 public interface ApiService {
 
-   /* @GET("images")
-    Observable<ResponseRoot> getImages(@Query("fields") String fields,
-                                       @Query("sort_order") String sort,
-                                       @Query("phrase") String phrase);*/
    @GET("images")
    Call<ResponseRoot> getImages(@Query("fields") String fields,
                                 @Query("sort_order") String sort,
