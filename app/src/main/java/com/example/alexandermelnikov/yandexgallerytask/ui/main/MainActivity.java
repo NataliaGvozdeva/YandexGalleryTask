@@ -3,15 +3,22 @@ package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
@@ -20,6 +27,7 @@ import com.cjj.sva.JJSearchView;
 import com.cjj.sva.anim.controller.JJAroundCircleBornTailController;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
+import com.daimajia.androidanimations.library.sliders.SlideInDownAnimator;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
@@ -52,6 +60,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @BindView(R.id.btn_sort) ImageButton btnSort;
     @BindView(R.id.rv_images) RecyclerView rvImages;
     @BindView(R.id.et_search) EditText etSearch;
+    @BindView(R.id.tv_search_header) TextView tvHeaderText;
+    @BindView(R.id.layout_header) RelativeLayout layoutHeader;
 
 
     @Override
@@ -68,6 +78,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             }
         });
         rvImages.setAdapter(mGalleryAdapter);
+
+        TypedArray hintObjects = getResources().obtainTypedArray(R.array.search_hint_objects);
+        Random random = new Random();
+        int index = random.nextInt(hintObjects.length());
+        mMainActivityPresenter.setupSearchBarHint(hintObjects.getString(index));
     }
 
 
@@ -91,6 +106,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                     mMainActivityPresenter.searchInputChanges(text);
                 });
 
+        etSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
+                mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString());
+                return false;
+            }
+        });
+
         mDisposable.addAll(clearButton, searchButton, sortButton, searchInputChanges);
     }
 
@@ -100,12 +123,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void setupEditTextHint() {
-        TypedArray hintObjects = getResources().obtainTypedArray(R.array.search_hint_objects);
-        Random random = new Random();
-        int index = random.nextInt(hintObjects.length());
-        Log.d(TAG, "setupEditTextHint: " + hintObjects.getString(index));
-        etSearch.setHint(new StringBuilder("Search: ").append(hintObjects.getString(index)));
+    public void setupEditTextHint(String hintObject) {
+        etSearch.setHint(new StringBuilder("Search: ").append(hintObject));
     }
 
     @Override
@@ -150,7 +169,25 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void updateSearchHeader(String searchObject) {
-
+    public void hideKeyboard() {
+        InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
     }
+
+    @Override
+    public void showHeader(String lastSearchObject) {
+        if (layoutHeader.getVisibility() == View.INVISIBLE) {
+            layoutHeader.setVisibility(View.VISIBLE);
+            YoYo.with(new SlideInDownAnimator())
+                .duration(500)
+                .playOn(layoutHeader);
+        }
+        tvHeaderText.setText(new StringBuilder("Search results on: ").append(lastSearchObject));
+    }
+
+    @Override
+    public void showSnackbarMessage(String message) {
+        Snackbar.make(findViewById(R.id.main_layout), message, Snackbar.LENGTH_SHORT).show();
+    }
+
 }

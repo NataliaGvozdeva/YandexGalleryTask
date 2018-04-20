@@ -14,7 +14,7 @@ import java.util.List;
 @StateStrategyType(OneExecutionStateStrategy.class)
 public interface MainView extends BaseView {
 
-    void setupEditTextHint();
+    void setupEditTextHint(String hintObject);
 
     void replaceGalleryData(List<Image> images);
 
@@ -28,5 +28,9 @@ public interface MainView extends BaseView {
 
     void clearSearchInput();
 
-    void updateSearchHeader(String searchObject);
+    void hideKeyboard();
+
+    void showHeader(String lastSearchObject);
+
+    void showSnackbarMessage(String message);
 }

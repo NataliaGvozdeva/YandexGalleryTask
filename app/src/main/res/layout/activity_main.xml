@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/main_layout"
     tools:context="com.example.alexandermelnikov.yandexgallerytask.ui.main.MainActivity">
 
     <RelativeLayout
@@ -35,8 +36,11 @@
                 android:layout_toEndOf="@+id/btn_clear"
                 android:layout_marginStart="20dp"
                 android:layout_centerVertical="true"
+                android:paddingEnd="50dp"
                 android:textSize="16sp"
                 android:background="@android:color/transparent"
+                android:imeOptions="actionSearch|flagNoExtractUi"
+                android:inputType="text"
                 tools:hint="Search: Forest"/>
 
             <ImageButton
@@ -63,7 +67,7 @@
             android:layout_height="wrap_content"
             android:src="@drawable/ic_bg_image"
             android:layout_centerHorizontal="true"
-            android:layout_marginTop="100dp" />
+            android:layout_marginTop="60dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -109,7 +113,7 @@
                 android:layout_height="wrap_content"
                 android:paddingVertical="12dp"
                 android:paddingHorizontal="16dp"
-                android:visibility="gone"
+                android:visibility="invisible"
                 tools:visibility="visible">
 
                 <TextView

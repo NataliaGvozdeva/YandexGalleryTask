@@ -28,11 +28,12 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
 
     private String mSelectedSearchSortMethod;
     private String mSearchInput;
+    private String mCurrentHintObject;
 
 
     public MainPresenter() {
         GalleryTaskApp.getAppComponent().inject(this);
-        getViewState().setupEditTextHint();
+        mSearchInput = "";
     }
 
     @Override
@@ -40,15 +41,13 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
         super.attachView(view);
         getViewState().attachInputListeners();
 
-        //
-        mUserDataRep.putValue(mUserDataRep.SEARCH_SORT_METHOD, SortMethods.best.toString());
-        //
-
         mSelectedSearchSortMethod = (String) mUserDataRep.getValue(mUserDataRep.SEARCH_SORT_METHOD, null);
         if (mSelectedSearchSortMethod == null) {
             mUserDataRep.putValue(mUserDataRep.SEARCH_SORT_METHOD, SortMethods.best.toString());
             mSelectedSearchSortMethod = SortMethods.best.toString();
         }
+
+        getViewState().setupEditTextHint(mCurrentHintObject);
     }
 
     @Override
@@ -56,23 +55,34 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
         super.detachView(view);
     }
 
+    public void setupSearchBarHint(String hintObject) {
+        if (mCurrentHintObject == null) {
+            mCurrentHintObject = hintObject;
+        }
+    }
+
     public void searchInputChanges(String input) {
         mSearchInput = input;
     }
 
     public void loadImagesRequest(String phrase) {
-        Log.d(TAG, "loadImagesRequest: " + phrase);
         if (!phrase.isEmpty()) {
             GalleryTaskApp.getApiHelper().getImages(phrase, mSelectedSearchSortMethod, this);
             getViewState().animateSearchButton();
         } else {
             getViewState().animateEmptySearchBar();
         }
+        getViewState().hideKeyboard();
     }
 
     @Override
     public void onImagesResultPassed(List<Image> images) {
-        getViewState().replaceGalleryData(images);
+        if (!images.isEmpty()) {
+            getViewState().replaceGalleryData(images);
+            getViewState().showHeader(mSearchInput);
+        } else {
+            getViewState().showSnackbarMessage("The search has not given any results");
+        }
     }
 
     public void clearSearchRequest() {
