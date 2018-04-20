@@ -2,6 +2,7 @@ package com.example.alexandermelnikov.yandexgallerytask.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,8 @@ import butterknife.ButterKnife;
 
 public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryViewHolder> {
 
+    private static final String TAG = "MyTag";
+    
     private Context mContext;
     private List<Image> images;
 

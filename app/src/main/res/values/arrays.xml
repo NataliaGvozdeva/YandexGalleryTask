@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="search_hint_objects">
+        <item>City</item>
+        <item>Forest</item>
+        <item>Dog</item>
+        <item>Car</item>
+        <item>Flowers</item>
+        <item>Sunrise</item>
+        <item>Night city</item>
+        <item>Sea view</item>
+        <item>Desert</item>
+        <item>Mountains</item>
+    </string-array>
+
+    <string-array name="sort_methods">
+        <item>Best</item>
+        <item>Most populat</item>
+        <item>Newest</item>
+    </string-array>
+
+</resources>

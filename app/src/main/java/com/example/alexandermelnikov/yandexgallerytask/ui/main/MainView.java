@@ -14,6 +14,19 @@ import java.util.List;
 @StateStrategyType(OneExecutionStateStrategy.class)
 public interface MainView extends BaseView {
 
+    void setupEditTextHint();
+
     void replaceGalleryData(List<Image> images);
 
+    void animateSearchButton();
+
+    void animateClearButton();
+
+    void showSortMethodsDialog();
+
+    void animateEmptySearchBar();
+
+    void clearSearchInput();
+
+    void updateSearchHeader(String searchObject);
 }

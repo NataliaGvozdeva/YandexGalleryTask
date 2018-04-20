@@ -9,6 +9,7 @@ import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Query;
+import retrofit2.http.Url;
 
 /**
  * Created by AlexMelnikov on 17.04.18.
@@ -21,5 +22,4 @@ public interface ApiService {
                                 @Query("sort_order") String sort,
                                 @Query("phrase") String phrase,
                                 @Header("Api-Key") String apiKey);
-
 }
