@@ -27,6 +27,7 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.0'
     testImplementation 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:1.10.19'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     //Design
@@ -35,8 +36,6 @@ dependencies {
     //AndroidViewAnimations
     compile 'com.daimajia.easing:library:2.0@aar'
     compile 'com.daimajia.androidanimations:library:2.3@aar'
-    //JJSearchViewAnim
-    compile 'com.github.android-cjj:JJSearchViewAnim:49a43019d6'
     //Butterknife
     compile 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
@@ -67,4 +66,6 @@ dependencies {
     compile 'com.orhanobut:hawk:2.0.1'
     //Material Dialog
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
+    //Calligraphy
+    compile 'uk.co.chrisjenx:calligraphy:2.3.0'
 }

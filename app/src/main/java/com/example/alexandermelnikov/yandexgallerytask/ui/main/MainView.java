@@ -5,6 +5,7 @@ import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
 import com.example.alexandermelnikov.yandexgallerytask.ui.BaseView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,9 +17,17 @@ public interface MainView extends BaseView {
 
     void setupEditTextHint(String hintObject);
 
-    void replaceGalleryData(List<Image> images);
+    void showImagesWithAnimation(List<Image> images);
+
+    void showImagesNoAnimation(List<Image> images);
+
+    void hideImagesWithAnimation();
 
     void animateSearchButton();
+
+    void animateClearButtonToBack();
+
+    void animateBackButtonToClear();
 
     void animateClearButton();
 
@@ -32,5 +41,9 @@ public interface MainView extends BaseView {
 
     void showHeader(String lastSearchObject);
 
-    void showSnackbarMessage(String message);
+    void hideHeader();
+
+    void showEmptySearchResultMessage();
+
+    void openGalleryItemPreviewDialog(ArrayList<Image> images, int position);
 }

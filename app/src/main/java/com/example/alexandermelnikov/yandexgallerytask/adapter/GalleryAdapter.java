@@ -12,8 +12,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
+import com.jakewharton.rxbinding2.view.RxView;
 
-import java.nio.file.attribute.FileAttribute;
 import java.util.List;
 
 import butterknife.BindView;
@@ -29,10 +29,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
     
     private Context mContext;
     private List<Image> images;
+    private OnGalleryItemClickListener listener;
 
-    public GalleryAdapter(Context mContext, List<Image> images) {
+    public GalleryAdapter(Context mContext, List<Image> images, OnGalleryItemClickListener listener) {
         this.mContext = mContext;
         this.images = images;
+        this.listener = listener;
     }
 
     public class GallaryViewHolder extends RecyclerView.ViewHolder {
@@ -46,6 +48,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
         }
     }
 
+    public interface OnGalleryItemClickListener {
+        void onGalleryItemClicked(int poition);
+    }
 
     @Override
     public GallaryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -60,6 +65,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
                 .crossFade()
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(holder.iv_thumbnail);
+
+        RxView.clicks(holder.iv_thumbnail)
+               .subscribe(view -> listener.onGalleryItemClicked(position));
     }
 
     @Override
@@ -70,6 +78,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
     public void replaceData(List<Image> translations) {
         images.clear();
         images.addAll(translations);
+        notifyDataSetChanged();
+    }
+
+    public void clearData() {
+        images.clear();
         notifyDataSetChanged();
     }
 

@@ -5,6 +5,7 @@ import android.util.Log;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
+import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.api.ImagesResultHandler;
 import com.example.alexandermelnikov.yandexgallerytask.data.UserDataRepository;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
@@ -15,12 +16,9 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-/**
- * Created by AlexMelnikov on 17.04.18.
- */
 
 @InjectViewState
-public class MainPresenter extends MvpPresenter<MainView> implements ImagesResultHandler {
+public class MainPresenter extends MvpPresenter<MainView> implements ImagesResultHandler, GalleryAdapter.OnGalleryItemClickListener {
     private static final String TAG = "MyTag";
 
     @Inject
@@ -30,10 +28,15 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
     private String mSearchInput;
     private String mCurrentHintObject;
 
+    private ArrayList<Image> mCurrentImages;
+
+    private boolean clearButtonBackModeOn;
 
     public MainPresenter() {
         GalleryTaskApp.getAppComponent().inject(this);
         mSearchInput = "";
+        mCurrentImages = new ArrayList<>();
+        clearButtonBackModeOn = false;
     }
 
     @Override
@@ -63,6 +66,10 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
 
     public void searchInputChanges(String input) {
         mSearchInput = input;
+        if (clearButtonBackModeOn) {
+            getViewState().animateBackButtonToClear();
+            clearButtonBackModeOn = false;
+        }
     }
 
     public void loadImagesRequest(String phrase) {
@@ -78,18 +85,37 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
     @Override
     public void onImagesResultPassed(List<Image> images) {
         if (!images.isEmpty()) {
-            getViewState().replaceGalleryData(images);
+            if (mCurrentImages.isEmpty()) {
+                getViewState().showImagesWithAnimation(images);
+            } else {
+                getViewState().showImagesNoAnimation(images);
+            }
             getViewState().showHeader(mSearchInput);
+            mCurrentImages.clear();
+            mCurrentImages.addAll(images);
         } else {
-            getViewState().showSnackbarMessage("The search has not given any results");
+            getViewState().showEmptySearchResultMessage();
         }
     }
 
-    public void clearSearchRequest() {
-        if (!mSearchInput.isEmpty()) {
-            mSearchInput = "";
-            getViewState().clearSearchInput();
-            getViewState().animateClearButton();
+    public void clearButtonPressed() {
+        if (!clearButtonBackModeOn) {
+            if (!mSearchInput.isEmpty()) {
+                mSearchInput = "";
+                getViewState().clearSearchInput();
+                if (!mCurrentImages.isEmpty()) {
+                    clearButtonBackModeOn = true;
+                    getViewState().animateClearButtonToBack();
+                } else {
+                    getViewState().animateClearButton();
+                }
+            }
+        } else {
+            mCurrentImages.clear();
+            getViewState().hideImagesWithAnimation();
+            getViewState().hideHeader();
+            getViewState().animateBackButtonToClear();
+            clearButtonBackModeOn = false;
         }
     }
 
@@ -113,5 +139,10 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
                 break;
         }
         Log.d(TAG, "sortMethodPicked: "  + mSelectedSearchSortMethod);
+    }
+
+    @Override
+    public void onGalleryItemClicked(int position) {
+        getViewState().openGalleryItemPreviewDialog(mCurrentImages, position);
     }
 }

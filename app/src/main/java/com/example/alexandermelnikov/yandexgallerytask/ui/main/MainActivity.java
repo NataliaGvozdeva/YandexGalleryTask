@@ -1,19 +1,18 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputConnection;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -23,15 +22,14 @@ import android.widget.TextView;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.cjj.sva.JJSearchView;
-import com.cjj.sva.anim.controller.JJAroundCircleBornTailController;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.daimajia.androidanimations.library.sliders.SlideInDownAnimator;
-import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
+import com.example.alexandermelnikov.yandexgallerytask.ui.image_fullscreen_dialog.SlideshowDialogFragment;
+import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
@@ -45,10 +43,9 @@ import butterknife.ButterKnife;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends MvpAppCompatActivity implements MainView{
-
-    private static final String TAG = "MyTag";
 
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
@@ -62,6 +59,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @BindView(R.id.et_search) EditText etSearch;
     @BindView(R.id.tv_search_header) TextView tvHeaderText;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
+    @BindView(R.id.gallery_container) RelativeLayout layoutGalleryContainer;
 
 
     @Override
@@ -70,8 +68,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<Image>());
-        rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), 3) {
+        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<Image>(), mMainActivityPresenter);
+        rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), Constants.DEFAULT_PORTRAIT_NUM_OF_COLUMNS) {
             @Override
             public boolean canScrollVertically() {
                 return false;
@@ -83,8 +81,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         Random random = new Random();
         int index = random.nextInt(hintObjects.length());
         mMainActivityPresenter.setupSearchBarHint(hintObjects.getString(index));
-    }
 
+        //Prevents the soft keyboard from pushing the view above it
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+
+    }
 
     @Override
     public void attachInputListeners() {
@@ -93,7 +94,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                 .subscribe(o -> mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString()));
 
         Disposable clearButton = RxView.clicks(btnClear)
-                .subscribe(o -> mMainActivityPresenter.clearSearchRequest());
+                .subscribe(o -> mMainActivityPresenter.clearButtonPressed());
 
         Disposable sortButton = RxView.clicks(btnSort)
                 .subscribe(o -> mMainActivityPresenter.sortButtonPressed());
@@ -118,6 +119,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    @Override
     public void dettachInputListeners() {
         mDisposable.clear();
     }
@@ -135,8 +141,40 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void replaceGalleryData(List<Image> images) {
+    public void showImagesWithAnimation(List<Image> images) {
         mGalleryAdapter.replaceData(images);
+        YoYo.with(Techniques.SlideInUp)
+                .duration(500)
+                .playOn(layoutGalleryContainer);
+    }
+
+    @Override
+    public void showImagesNoAnimation(List<Image> images) {
+        mGalleryAdapter.replaceData(images);
+    }
+
+    @Override
+    public void hideImagesWithAnimation() {
+        YoYo.with(Techniques.SlideOutDown)
+                .duration(500)
+                .withListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animator) {}
+
+                    @Override
+                    public void onAnimationEnd(Animator animator) {
+                        mGalleryAdapter.clearData();
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animator) {
+                        mGalleryAdapter.clearData();
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animator) {}
+                })
+                .playOn(layoutGalleryContainer);
     }
 
     @Override
@@ -148,9 +186,25 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
+    public void animateClearButtonToBack() {
+        AnimatedVectorDrawable drawable = (AnimatedVectorDrawable) getResources()
+                .getDrawable(R.drawable.ic_clear_gray_anim_to_back_28dp);
+        btnClear.setImageDrawable(drawable);
+        drawable.start();
+    }
+
+    @Override
+    public void animateBackButtonToClear() {
+        AnimatedVectorDrawable drawable = (AnimatedVectorDrawable) getResources()
+                .getDrawable(R.drawable.ic_arrow_back_gray_anim_to_clear_28dp);
+        btnClear.setImageDrawable(drawable);
+        drawable.start();
+    }
+
+    @Override
     public void animateClearButton() {
         AnimatedVectorDrawable drawable = (AnimatedVectorDrawable) getResources()
-                .getDrawable(R.drawable.ic_clear_gray_anim_30dp);
+                .getDrawable(R.drawable.ic_clear_gray_anim_28dp);
         btnClear.setImageDrawable(drawable);
         drawable.start();
     }
@@ -178,16 +232,53 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     public void showHeader(String lastSearchObject) {
         if (layoutHeader.getVisibility() == View.INVISIBLE) {
             layoutHeader.setVisibility(View.VISIBLE);
-            YoYo.with(new SlideInDownAnimator())
+            YoYo.with(Techniques.SlideInDown)
                 .duration(500)
                 .playOn(layoutHeader);
         }
-        tvHeaderText.setText(new StringBuilder("Search results on: ").append(lastSearchObject));
+        tvHeaderText.setText(new StringBuilder(getResources().getString(R.string.search_results)).append(" ").append(lastSearchObject));
     }
 
     @Override
-    public void showSnackbarMessage(String message) {
-        Snackbar.make(findViewById(R.id.main_layout), message, Snackbar.LENGTH_SHORT).show();
+    public void hideHeader() {
+        YoYo.with(Techniques.SlideOutUp)
+                .duration(500)
+                .withListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animator) {
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animator) {
+                        layoutHeader.setVisibility(View.INVISIBLE);
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animator) {
+                        layoutHeader.setVisibility(View.INVISIBLE);
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animator) {
+                    }
+                })
+                .playOn(layoutHeader);
     }
 
+    @Override
+    public void showEmptySearchResultMessage() {
+        Snackbar.make(findViewById(R.id.main_layout), getResources().getString(R.string.empty_search_result), Snackbar.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void openGalleryItemPreviewDialog(ArrayList<Image> images, int position) {
+        Bundle args = new Bundle();
+        args.putSerializable("images", images);
+        args.putInt("position", position);
+
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        SlideshowDialogFragment fragment = SlideshowDialogFragment.newInstance();
+        fragment.setArguments(args);
+        fragment.show(ft, "slideshow");
+    }
 }
