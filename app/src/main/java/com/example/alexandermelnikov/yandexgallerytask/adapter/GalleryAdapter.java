@@ -45,6 +45,9 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
         public GallaryViewHolder(View view) {
             super(view);
             ButterKnife.bind(this, view);
+
+            RxView.clicks(iv_thumbnail)
+                    .subscribe(v -> listener.onGalleryItemClicked(getAdapterPosition()));
         }
     }
 
@@ -65,9 +68,6 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
                 .crossFade()
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(holder.iv_thumbnail);
-
-        RxView.clicks(holder.iv_thumbnail)
-               .subscribe(view -> listener.onGalleryItemClicked(position));
     }
 
     @Override

@@ -9,13 +9,17 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -27,6 +31,7 @@ import com.daimajia.androidanimations.library.YoYo;
 import com.daimajia.androidanimations.library.sliders.SlideInDownAnimator;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
+import com.example.alexandermelnikov.yandexgallerytask.adapter.SortMethodsDialogAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
 import com.example.alexandermelnikov.yandexgallerytask.ui.image_fullscreen_dialog.SlideshowDialogFragment;
 import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
@@ -47,6 +52,8 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends MvpAppCompatActivity implements MainView{
 
+    private static final String TAG = "MyTag";
+
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
     CompositeDisposable mDisposable = new CompositeDisposable();
@@ -58,9 +65,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @BindView(R.id.rv_images) RecyclerView rvImages;
     @BindView(R.id.et_search) EditText etSearch;
     @BindView(R.id.tv_search_header) TextView tvHeaderText;
+    @BindView(R.id.progressBar) ProgressBar progressBar;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
     @BindView(R.id.gallery_container) RelativeLayout layoutGalleryContainer;
+    @BindView(R.id.main_background) RelativeLayout layoutBackground;
 
+
+    private MaterialDialog sortMethodsDialog;
+    private RecyclerView rvSortMethods;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,7 +122,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         etSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString());
+                if (i == EditorInfo.IME_ACTION_SEARCH) {
+                    mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString());
+                }
                 return false;
             }
         });
@@ -178,6 +192,26 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
+    public void showProgressBar() {
+        progressBar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void hideProgressBar() {
+        progressBar.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
+    public void showBackground() {
+        layoutBackground.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void hideBackground() {
+        layoutBackground.setVisibility(View.INVISIBLE);
+    }
+
+    @Override
     public void animateSearchButton() {
         AnimatedVectorDrawable drawable = (AnimatedVectorDrawable) getResources()
                 .getDrawable(R.drawable.ic_search_gray_anim_30dp);
@@ -210,11 +244,28 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void showSortMethodsDialog() {
-        new MaterialDialog.Builder(this)
-                .items(R.array.sort_methods)
-                .itemsCallback((dialog, view, which, text) -> mMainActivityPresenter.sortMethodPicked(which))
-                .show();
+    public void showSortMethodsDialog(String currentMethod, int currentMethodIndex) {
+        sortMethodsDialog = new MaterialDialog.Builder(this)
+                .title("Sorting")
+                .customView(R.layout.dialog_sort_methods, false)
+                //.onPositive(((dialog1, which) -> mCardBrowserPresenter.createNewDeckRequest()))
+                .build();
+
+        rvSortMethods = sortMethodsDialog.getView().findViewById(R.id.rv_methods);
+        rvSortMethods.setLayoutManager(new LinearLayoutManager(this));
+        rvSortMethods.setAdapter(new SortMethodsDialogAdapter(this,
+                currentMethod, currentMethodIndex, mMainActivityPresenter));
+
+        sortMethodsDialog.show();
+    }
+
+    @Override
+    public void hideSortMethodsDialog() {
+        try {
+            sortMethodsDialog.hide();
+        } catch (NullPointerException e) {
+            Log.e(TAG, "hideDecksListDialog: " + e.getLocalizedMessage());
+        }
     }
 
     @Override
@@ -267,7 +318,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void showEmptySearchResultMessage() {
-        Snackbar.make(findViewById(R.id.main_layout), getResources().getString(R.string.empty_search_result), Snackbar.LENGTH_SHORT).show();
+        Log.d(TAG, "showEmptySearchResultMessage: ");
+        Snackbar.make(findViewById(R.id.main_layout), getResources().getString(R.string.empty_search_result),
+                Snackbar.LENGTH_SHORT).show();
     }
 
     @Override
@@ -280,5 +333,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         SlideshowDialogFragment fragment = SlideshowDialogFragment.newInstance();
         fragment.setArguments(args);
         fragment.show(ft, "slideshow");
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (layoutBackground.getVisibility() == View.INVISIBLE) {
+            mMainActivityPresenter.hideImages();
+        } else {
+            super.onBackPressed();
+        }
     }
 }

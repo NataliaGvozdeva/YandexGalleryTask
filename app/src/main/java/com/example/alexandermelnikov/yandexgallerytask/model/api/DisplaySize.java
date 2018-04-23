@@ -1,10 +1,12 @@
 package com.example.alexandermelnikov.yandexgallerytask.model.api;
 
+import java.io.Serializable;
+
 /**
  * Created by AlexMelnikov on 17.04.18.
  */
 
-public class DisplaySize {
+public class DisplaySize implements Serializable {
     public boolean is_watermarked;
     public String name;
     public String uri;

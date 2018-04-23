@@ -3,4 +3,9 @@
 
     <string name="search_results">Search results on:</string>
     <string name="empty_search_result">The search has not given any results</string>
+
+    //Sort options
+    <string name="best">Best</string>
+    <string name="most_popular">Most popular</string>
+    <string name="newest">Newest</string>
 </resources>

@@ -57,17 +57,19 @@
     </RelativeLayout>
 
     <RelativeLayout
+        android:id="@+id/main_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar_layout">
 
-        <!--<ProgressBar
+        <ProgressBar
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:indeterminate="true"/>-->
+            android:indeterminate="true"
+            android:visibility="invisible"/>
 
         <ImageView
             android:id="@+id/iv_app_logo"

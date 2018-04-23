@@ -5,5 +5,17 @@ package com.example.alexandermelnikov.yandexgallerytask.utils;
  */
 
 public enum SortMethods {
-    best, most_popular, newest
+    best(0),
+    most_popular(1),
+    newest(2);
+
+    private int index;
+
+    private SortMethods(int index) {
+        this.index = index;
+    }
+
+    public int getIndex() {
+        return index;
+    }
 }

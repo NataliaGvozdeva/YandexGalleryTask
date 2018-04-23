@@ -23,6 +23,14 @@ public interface MainView extends BaseView {
 
     void hideImagesWithAnimation();
 
+    void showProgressBar();
+
+    void hideProgressBar();
+
+    void showBackground();
+
+    void hideBackground();
+
     void animateSearchButton();
 
     void animateClearButtonToBack();
@@ -31,7 +39,9 @@ public interface MainView extends BaseView {
 
     void animateClearButton();
 
-    void showSortMethodsDialog();
+    void showSortMethodsDialog(String currentMethod, int currentMethodIndex);
+
+    void hideSortMethodsDialog();
 
     void animateEmptySearchBar();
 

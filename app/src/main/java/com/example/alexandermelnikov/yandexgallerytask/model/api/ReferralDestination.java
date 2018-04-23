@@ -1,10 +1,12 @@
 package com.example.alexandermelnikov.yandexgallerytask.model.api;
 
+import java.io.Serializable;
+
 /**
  * Created by AlexMelnikov on 17.04.18.
  */
 
-public class ReferralDestination {
+public class ReferralDestination implements Serializable{
 
     public String site_name;
     public String uri;

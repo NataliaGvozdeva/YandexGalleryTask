@@ -12,4 +12,8 @@ public class Constants {
 
     //MainActivity Constants
     public static final int DEFAULT_PORTRAIT_NUM_OF_COLUMNS = 3;
+
+    //SortMethodDialogAdapter Constants
+    public static final int NUMBER_OF_SORT_METHODS = 3;
+
 }

@@ -1,5 +1,6 @@
 package com.example.alexandermelnikov.yandexgallerytask.model.api;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
