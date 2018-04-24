@@ -41,21 +41,19 @@ public interface MainView extends BaseView {
 
     void animateClearButton();
 
-    void showSortMethodsDialog(String currentMethod, int currentMethodIndex);
-
-    void hideSortMethodsDialog();
-
     void animateEmptySearchBar();
 
     void clearSearchInput();
 
     void hideKeyboard();
 
-    void showHeader(String lastSearchObject);
+    void showHeader(String lastSearchObject, int resultsCount);
 
     void hideHeader();
 
     void showEmptySearchResultMessage();
+
+    void startApiWebsiteIntent();
 
     void openGalleryItemPreviewDialog(ArrayList<Photo> photos, int position, ImageView sharedImageView);
 }

@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -43,9 +44,13 @@ public class SlideshowDialogFragment extends DialogFragment {
     private MyViewPagerAdapter myViewPagerAdapter;
     private int selectedPosition = 0;
 
-    public static SlideshowDialogFragment newInstance() {
-        return new SlideshowDialogFragment();
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -61,11 +66,6 @@ public class SlideshowDialogFragment extends DialogFragment {
         viewPager.addOnPageChangeListener(viewPagerPageChangeListener);
 
         setCurrentItem(selectedPosition);
-
-        //Set shared element enter transition
-        postponeEnterTransition();
-        setSharedElementEnterTransition(TransitionInflater.from(getContext()).inflateTransition(android.R.transition.move));
-        setSharedElementReturnTransition(null);
 
         return v;
     }
@@ -101,13 +101,6 @@ public class SlideshowDialogFragment extends DialogFragment {
         //tvUri.setText(photo.getReferral_destinations().get(0).getUri());
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-    }
-
-
 
     public class MyViewPagerAdapter extends PagerAdapter {
 
@@ -121,31 +114,16 @@ public class SlideshowDialogFragment extends DialogFragment {
 
             layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View view = layoutInflater.inflate(R.layout.image_fullscreen, container, false);
-
             PhotoView imageViewPreview = (PhotoView) view.findViewById(R.id.iv_preview);
-
             Photo photo = photos.get(position);
 
             Glide.with(getActivity()).load(photo.getSrc().getLarge())
-                    .listener(new RequestListener<String, GlideDrawable>() {
-                        @Override
-                        public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                            return false;
-                        }
-
-                        @Override
-                        public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-                            startPostponedEnterTransition();
-                            return false;
-                        }
-                    })
                     .thumbnail(0.5f)
                     .crossFade()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(imageViewPreview);
 
             container.addView(view);
-
             return view;
         }
 

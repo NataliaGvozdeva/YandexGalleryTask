@@ -1,17 +1,15 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
-import android.view.View;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
-import com.example.alexandermelnikov.yandexgallerytask.adapter.SortMethodsDialogAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.api.ImagesResultHandler;
 import com.example.alexandermelnikov.yandexgallerytask.data.UserDataRepository;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
-import com.example.alexandermelnikov.yandexgallerytask.utils.SortMethods;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,13 +19,12 @@ import javax.inject.Inject;
 
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements ImagesResultHandler,
-        GalleryAdapter.OnGalleryItemClickListener, SortMethodsDialogAdapter.OnSortMethodsItemClickListener {
+        GalleryAdapter.OnGalleryItemClickListener {
     private static final String TAG = "MyTag";
 
     @Inject
     UserDataRepository mUserDataRep;
 
-    private String mSelectedSearchSortMethod;
     private String mSearchInput;
     private String mCurrentHintObject;
 
@@ -49,10 +46,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
         super.attachView(view);
         getViewState().attachInputListeners();
 
-        mSelectedSearchSortMethod = (String) mUserDataRep.getValue(mUserDataRep.SEARCH_SORT_METHOD, null);
-        if (mSelectedSearchSortMethod == null) {
-            mUserDataRep.putValue(mUserDataRep.SEARCH_SORT_METHOD, SortMethods.best.toString());
-            mSelectedSearchSortMethod = SortMethods.best.toString();
+        //Check if mCurrentPhotos is not empty and show those previously loaded images if so
+        if (!mCurrentPhotos.isEmpty()) {
+            showImages(false);
         }
 
         getViewState().setupEditTextHint(mCurrentHintObject);
@@ -80,7 +76,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
     public void loadImagesRequest(String phrase) {
         lastImagesRequestPhrase = phrase;
         if (!phrase.isEmpty()) {
-            GalleryTaskApp.getApiHelper().getImages(phrase, mSelectedSearchSortMethod, this);
+            GalleryTaskApp.getApiHelper().getImages(phrase, this);
             getViewState().animateSearchButton();
             getViewState().showProgressBar();
             getViewState().hideKeyboard();
@@ -93,14 +89,15 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
     public void onImagesResultPassed(List<Photo> photos) {
         if (!photos.isEmpty()) {
             if (mCurrentPhotos.isEmpty()) {
-                getViewState().showImagesWithAnimation(photos);
+                mCurrentPhotos.clear();
+                mCurrentPhotos.addAll(photos);
+                showImages(true);
             } else {
-                getViewState().showImagesNoAnimation(photos);
+                mCurrentPhotos.clear();
+                mCurrentPhotos.addAll(photos);
+                showImages(false);
             }
-            mCurrentPhotos.clear();
-            mCurrentPhotos.addAll(photos);
-            getViewState().hideBackground();
-            getViewState().showHeader(lastImagesRequestPhrase);
+
         } else {
             getViewState().showEmptySearchResultMessage();
         }
@@ -124,6 +121,16 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
         }
     }
 
+    private void showImages(boolean withAnimation) {
+        if (withAnimation) {
+            getViewState().showImagesWithAnimation(mCurrentPhotos);
+        } else {
+            getViewState().showImagesNoAnimation(mCurrentPhotos);
+        }
+        getViewState().hideBackground();
+        getViewState().showHeader(lastImagesRequestPhrase, mCurrentPhotos.size());
+    }
+
     public void hideImages() {
         mCurrentPhotos.clear();
         getViewState().hideImagesWithAnimation();
@@ -135,32 +142,12 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
         }
     }
 
-    public void sortButtonPressed() {
-        getViewState().showSortMethodsDialog(mSelectedSearchSortMethod, SortMethods.valueOf(mSelectedSearchSortMethod).getIndex());
-    }
-
     @Override
     public void onGalleryItemClicked(int position, ImageView sharedImageView) {
         getViewState().openGalleryItemPreviewDialog(mCurrentPhotos, position, sharedImageView);
     }
 
-    @Override
-    public void onSortMethodsItemClicked(int position) {
-        switch (position) {
-            case 0:
-                mUserDataRep.putValue(mUserDataRep.SEARCH_SORT_METHOD, SortMethods.best.toString());
-                mSelectedSearchSortMethod = SortMethods.best.toString();
-                break;
-            case 1:
-                mUserDataRep.putValue(mUserDataRep.SEARCH_SORT_METHOD, SortMethods.most_popular.toString());
-                mSelectedSearchSortMethod = SortMethods.most_popular.toString();
-                break;
-            case 2:
-                mUserDataRep.putValue(mUserDataRep.SEARCH_SORT_METHOD, SortMethods.newest.toString());
-                mSelectedSearchSortMethod = SortMethods.newest.toString();
-                break;
-        }
-        getViewState().hideSortMethodsDialog();
-        loadImagesRequest(lastImagesRequestPhrase);
+    public void apiLogoPressed() {
+        getViewState().startApiWebsiteIntent();
     }
 }

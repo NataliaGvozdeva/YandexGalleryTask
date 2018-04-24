@@ -2,12 +2,15 @@ package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
 import android.animation.Animator;
 import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
+import android.net.Uri;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,6 +26,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
@@ -31,7 +35,6 @@ import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
-import com.example.alexandermelnikov.yandexgallerytask.adapter.SortMethodsDialogAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
 import com.example.alexandermelnikov.yandexgallerytask.ui.image_fullscreen_dialog.SlideshowDialogFragment;
 import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
@@ -61,18 +64,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @BindView(R.id.btn_clear) ImageButton btnClear;
     @BindView(R.id.btn_search) ImageButton btnSearch;
-    @BindView(R.id.btn_sort) ImageButton btnSort;
     @BindView(R.id.rv_images) RecyclerView rvImages;
     @BindView(R.id.et_search) EditText etSearch;
     @BindView(R.id.tv_search_header) TextView tvHeaderText;
+    @BindView(R.id.tv_results_counter) TextView tvResultsCounter;
     @BindView(R.id.progressBar) ProgressBar progressBar;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
     @BindView(R.id.gallery_container) RelativeLayout layoutGalleryContainer;
-    @BindView(R.id.main_background) RelativeLayout layoutBackground;
+    @BindView(R.id.main_background)
+    ConstraintLayout layoutBackground;
+    @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
 
-
-    private MaterialDialog sortMethodsDialog;
-    private RecyclerView rvSortMethods;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,8 +82,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        //Get current orientation to understand which default number of columns to use
+        int orientation = this.getResources().getConfiguration().orientation;
+        int recyclerNumberOfColumns;
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            recyclerNumberOfColumns = Constants.DEFAULT_PORTRAIT_NUM_OF_COLUMNS;
+        } else {
+            recyclerNumberOfColumns = Constants.DEFAULT_LANDSCAPE_NUM_OF_COLUMNS;
+        }
+
         mGalleryAdapter = new GalleryAdapter(this, new ArrayList<Photo>(), mMainActivityPresenter);
-        rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), Constants.DEFAULT_PORTRAIT_NUM_OF_COLUMNS) {
+        rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), recyclerNumberOfColumns) {
             @Override
             public boolean canScrollVertically() {
                 return false;
@@ -100,6 +111,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    @Override
     public void attachInputListeners() {
 
         Disposable searchButton = RxView.clicks(btnSearch)
@@ -107,9 +123,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
         Disposable clearButton = RxView.clicks(btnClear)
                 .subscribe(o -> mMainActivityPresenter.clearButtonPressed());
-
-        Disposable sortButton = RxView.clicks(btnSort)
-                .subscribe(o -> mMainActivityPresenter.sortButtonPressed());
 
         Disposable searchInputChanges = RxTextView.textChanges(etSearch)
                 .debounce(150, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
@@ -119,6 +132,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                     mMainActivityPresenter.searchInputChanges(text);
                 });
 
+       /* Disposable logoClick = RxView.clicks(ivApiLogo)
+                .subscribe(o -> {
+                    Log.d(TAG, "attachInputListeners: api logo clicked");
+                    mMainActivityPresenter.apiLogoPressed();});
+*/
         etSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
@@ -129,12 +147,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             }
         });
 
-        mDisposable.addAll(clearButton, searchButton, sortButton, searchInputChanges);
-    }
-
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+        mDisposable.addAll(clearButton, searchButton, searchInputChanges);
     }
 
     @Override
@@ -244,31 +257,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void showSortMethodsDialog(String currentMethod, int currentMethodIndex) {
-        sortMethodsDialog = new MaterialDialog.Builder(this)
-                .title("Sorting")
-                .customView(R.layout.dialog_sort_methods, false)
-                //.onPositive(((dialog1, which) -> mCardBrowserPresenter.createNewDeckRequest()))
-                .build();
-
-        rvSortMethods = sortMethodsDialog.getView().findViewById(R.id.rv_methods);
-        rvSortMethods.setLayoutManager(new LinearLayoutManager(this));
-        rvSortMethods.setAdapter(new SortMethodsDialogAdapter(this,
-                currentMethod, currentMethodIndex, mMainActivityPresenter));
-
-        sortMethodsDialog.show();
-    }
-
-    @Override
-    public void hideSortMethodsDialog() {
-        try {
-            sortMethodsDialog.hide();
-        } catch (NullPointerException e) {
-            Log.e(TAG, "hideDecksListDialog: " + e.getLocalizedMessage());
-        }
-    }
-
-    @Override
     public void clearSearchInput() {
         etSearch.setText("");
     }
@@ -280,7 +268,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void showHeader(String lastSearchObject) {
+    public void showHeader(String lastSearchObject, int resultsCount) {
         if (layoutHeader.getVisibility() == View.INVISIBLE) {
             layoutHeader.setVisibility(View.VISIBLE);
             YoYo.with(Techniques.SlideInDown)
@@ -288,6 +276,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                 .playOn(layoutHeader);
         }
         tvHeaderText.setText(new StringBuilder(getResources().getString(R.string.search_results)).append(" ").append(lastSearchObject));
+        tvResultsCounter.setText(new StringBuilder(getResources().getString(R.string.results_count)).append(" ").append(resultsCount));
     }
 
     @Override
@@ -324,15 +313,21 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
+    public void startApiWebsiteIntent() {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(Constants.PEXELS_API_SITE_URL));
+        startActivity(intent);
+    }
+
+    @Override
     public void openGalleryItemPreviewDialog(ArrayList<Photo> photos, int position, ImageView sharedImageView) {
         Bundle args = new Bundle();
         args.putSerializable("photos", photos);
         args.putInt("position", position);
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        SlideshowDialogFragment fragment = SlideshowDialogFragment.newInstance();
+        SlideshowDialogFragment fragment = new SlideshowDialogFragment();
         fragment.setArguments(args);
-        ft.addSharedElement(sharedImageView, ViewCompat.getTransitionName(sharedImageView));
         fragment.show(ft, "slideshow");
     }
 

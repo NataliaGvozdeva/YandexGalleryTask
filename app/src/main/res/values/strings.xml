@@ -1,11 +1,13 @@
 <resources>
     <string name="app_name">YandexGalleryTask</string>
 
-    <string name="search_results">Search results on:</string>
-    <string name="empty_search_result">The search has not given any results</string>
+    //activity_main
+    <string name="btn_history">History</string>
+    <string name="btn_info">About</string>
 
-    //Sort options
-    <string name="best">Best</string>
-    <string name="most_popular">Most popular</string>
-    <string name="newest">Newest</string>
+    //MainActivity
+    <string name="search_results">Search results on:</string>
+    <string name="results_count">Total:</string>
+    <string name="empty_search_result">The search has not given any results</string>
+    <string name="start_searching_now">Start searching photos now</string>
 </resources>

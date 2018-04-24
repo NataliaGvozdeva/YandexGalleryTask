@@ -10,8 +10,6 @@ import com.orhanobut.hawk.Hawk;
 
 public class UserDataRepository {
 
-    public static final String SEARCH_SORT_METHOD = "SEARCH_SORT_METHOD";
-
     public void putValue(String key, @NonNull Object value) {
         Hawk.put(key, value);
     }

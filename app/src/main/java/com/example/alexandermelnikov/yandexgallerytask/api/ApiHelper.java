@@ -34,13 +34,12 @@ public class ApiHelper {
         mService = retrofit.create(ApiService.class);
     }
 
-    public void getImages(String phrase, String sort, final ImagesResultHandler handler) {
+    public void getImages(String phrase, final ImagesResultHandler handler) {
         mService.getImages(Constants.API_KEY, phrase, Constants.DEFAULT_RESULTS_PER_PAGE).enqueue(new Callback<ResponseRoot>() {
             @Override
             public void onResponse(Call<ResponseRoot> call, Response<ResponseRoot> response) {
                 Log.d(TAG, response.toString());
                 if (response.body() != null){
-                    Log.d(TAG, "onResponse: " + response.toString());
                     List<Photo> photos = response.body().getPhotos();
                     handler.onImagesResultPassed(photos);
                 }
