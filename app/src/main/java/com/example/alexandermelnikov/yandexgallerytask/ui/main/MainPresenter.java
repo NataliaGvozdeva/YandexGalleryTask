@@ -1,6 +1,7 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
-import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -9,11 +10,10 @@ import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.SortMethodsDialogAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.api.ImagesResultHandler;
 import com.example.alexandermelnikov.yandexgallerytask.data.UserDataRepository;
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
+import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
 import com.example.alexandermelnikov.yandexgallerytask.utils.SortMethods;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -33,14 +33,14 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
 
     private String lastImagesRequestPhrase;
 
-    private ArrayList<Image> mCurrentImages;
+    private ArrayList<Photo> mCurrentPhotos;
 
     private boolean clearButtonBackModeOn;
 
     public MainPresenter() {
         GalleryTaskApp.getAppComponent().inject(this);
         mSearchInput = "";
-        mCurrentImages = new ArrayList<>();
+        mCurrentPhotos = new ArrayList<>();
         clearButtonBackModeOn = false;
     }
 
@@ -82,23 +82,23 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
         if (!phrase.isEmpty()) {
             GalleryTaskApp.getApiHelper().getImages(phrase, mSelectedSearchSortMethod, this);
             getViewState().animateSearchButton();
+            getViewState().showProgressBar();
+            getViewState().hideKeyboard();
         } else {
             getViewState().animateEmptySearchBar();
         }
-        getViewState().showProgressBar();
-        getViewState().hideKeyboard();
     }
 
     @Override
-    public void onImagesResultPassed(List<Image> images) {
-        if (!images.isEmpty()) {
-            if (mCurrentImages.isEmpty()) {
-                getViewState().showImagesWithAnimation(images);
+    public void onImagesResultPassed(List<Photo> photos) {
+        if (!photos.isEmpty()) {
+            if (mCurrentPhotos.isEmpty()) {
+                getViewState().showImagesWithAnimation(photos);
             } else {
-                getViewState().showImagesNoAnimation(images);
+                getViewState().showImagesNoAnimation(photos);
             }
-            mCurrentImages.clear();
-            mCurrentImages.addAll(images);
+            mCurrentPhotos.clear();
+            mCurrentPhotos.addAll(photos);
             getViewState().hideBackground();
             getViewState().showHeader(lastImagesRequestPhrase);
         } else {
@@ -112,7 +112,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
             if (!mSearchInput.isEmpty()) {
                 mSearchInput = "";
                 getViewState().clearSearchInput();
-                if (!mCurrentImages.isEmpty()) {
+                if (!mCurrentPhotos.isEmpty()) {
                     clearButtonBackModeOn = true;
                     getViewState().animateClearButtonToBack();
                 } else {
@@ -125,7 +125,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
     }
 
     public void hideImages() {
-        mCurrentImages.clear();
+        mCurrentPhotos.clear();
         getViewState().hideImagesWithAnimation();
         getViewState().hideHeader();
         getViewState().showBackground();
@@ -140,8 +140,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
     }
 
     @Override
-    public void onGalleryItemClicked(int position) {
-        getViewState().openGalleryItemPreviewDialog(mCurrentImages, position);
+    public void onGalleryItemClicked(int position, ImageView sharedImageView) {
+        getViewState().openGalleryItemPreviewDialog(mCurrentPhotos, position, sharedImageView);
     }
 
     @Override

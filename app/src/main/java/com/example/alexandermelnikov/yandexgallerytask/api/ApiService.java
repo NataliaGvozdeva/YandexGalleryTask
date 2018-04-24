@@ -17,9 +17,8 @@ import retrofit2.http.Url;
 
 public interface ApiService {
 
-   @GET("images")
-   Call<ResponseRoot> getImages(@Query("fields") String fields,
-                                @Query("sort_order") String sort,
-                                @Query("phrase") String phrase,
-                                @Header("Api-Key") String apiKey);
+   @GET("search")
+   Call<ResponseRoot> getImages(@Header("Authorization") String apiKey,
+                                @Query("query") String phrase,
+                                @Query("per_page") int numberOfResultsPerPage);
 }

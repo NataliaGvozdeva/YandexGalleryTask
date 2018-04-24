@@ -1,6 +1,7 @@
 package com.example.alexandermelnikov.yandexgallerytask.model.api;
 
-import java.io.Serializable;
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 /**
@@ -8,25 +9,44 @@ import java.util.List;
  */
 
 public class ResponseRoot {
-    public int result_count;
-    public List<Image> images;
+    @SerializedName("total_results")
+    public int totalResults;
 
-    public ResponseRoot() {
+    @SerializedName("per_page")
+    public int perPage;
+
+    public int page;
+    public List<Photo> photos;
+
+    public int getTotalResults() {
+        return totalResults;
     }
 
-    public int getResult_count() {
-        return result_count;
+    public void setTotalResults(int totalResults) {
+        this.totalResults = totalResults;
     }
 
-    public void setResult_count(int result_count) {
-        this.result_count = result_count;
+    public int getPerPage() {
+        return perPage;
     }
 
-    public List<Image> getImages() {
-        return images;
+    public void setPerPage(int perPage) {
+        this.perPage = perPage;
     }
 
-    public void setImages(List<Image> images) {
-        this.images = images;
+    public int getPage() {
+        return page;
+    }
+
+    public void setPage(int page) {
+        this.page = page;
+    }
+
+    public List<Photo> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<Photo> photos) {
+        this.photos = photos;
     }
 }

@@ -1,8 +1,7 @@
 package com.example.alexandermelnikov.yandexgallerytask.api;
 
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
+import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,6 +10,6 @@ import java.util.List;
 
 public interface ImagesResultHandler {
 
-    void onImagesResultPassed(List<Image> images);
+    void onImagesResultPassed(List<Photo> photos);
 
 }

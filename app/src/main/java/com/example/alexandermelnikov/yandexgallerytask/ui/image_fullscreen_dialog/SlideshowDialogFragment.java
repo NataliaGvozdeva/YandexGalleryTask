@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.transition.TransitionInflater;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +15,12 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.alexandermelnikov.yandexgallerytask.R;
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
+import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
+import com.github.chrisbanes.photoview.PhotoView;
 
 import java.util.ArrayList;
 
@@ -34,7 +39,7 @@ public class SlideshowDialogFragment extends DialogFragment {
     @BindView(R.id.uri)
     TextView tvUri;
 
-    private ArrayList<Image> images;
+    private ArrayList<Photo> photos;
     private MyViewPagerAdapter myViewPagerAdapter;
     private int selectedPosition = 0;
 
@@ -48,7 +53,7 @@ public class SlideshowDialogFragment extends DialogFragment {
         View v = inflater.inflate(R.layout.fragment_image_slider, container, false);
         ButterKnife.bind(this, v);
 
-        images = (ArrayList<Image>) getArguments().getSerializable("images");
+        photos = (ArrayList<Photo>) getArguments().getSerializable("photos");
         selectedPosition = getArguments().getInt("position");
 
         myViewPagerAdapter = new MyViewPagerAdapter();
@@ -56,6 +61,11 @@ public class SlideshowDialogFragment extends DialogFragment {
         viewPager.addOnPageChangeListener(viewPagerPageChangeListener);
 
         setCurrentItem(selectedPosition);
+
+        //Set shared element enter transition
+        postponeEnterTransition();
+        setSharedElementEnterTransition(TransitionInflater.from(getContext()).inflateTransition(android.R.transition.move));
+        setSharedElementReturnTransition(null);
 
         return v;
     }
@@ -84,11 +94,11 @@ public class SlideshowDialogFragment extends DialogFragment {
     };
 
     private void displayMetaInfo(int position) {
-        lblCount.setText(new StringBuilder("" + (position + 1)).append(" of ").append(images.size()).toString());
+        lblCount.setText(new StringBuilder("" + (position + 1)).append(" of ").append(photos.size()).toString());
 
-        Image image = images.get(position);
-        tvTitle.setText(image.getTitle());
-        tvUri.setText(image.getReferral_destinations().get(0).getUri());
+        Photo photo = photos.get(position);
+        tvTitle.setText(new StringBuilder("Photo by: ").append(photo.getPhotographer()));
+        //tvUri.setText(photo.getReferral_destinations().get(0).getUri());
     }
 
     @Override
@@ -112,11 +122,23 @@ public class SlideshowDialogFragment extends DialogFragment {
             layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View view = layoutInflater.inflate(R.layout.image_fullscreen, container, false);
 
-            ImageView imageViewPreview = (ImageView) view.findViewById(R.id.iv_preview);
+            PhotoView imageViewPreview = (PhotoView) view.findViewById(R.id.iv_preview);
 
-            Image image = images.get(position);
+            Photo photo = photos.get(position);
 
-            Glide.with(getActivity()).load(image.getDisplay_sizes().get(0).uri)
+            Glide.with(getActivity()).load(photo.getSrc().getLarge())
+                    .listener(new RequestListener<String, GlideDrawable>() {
+                        @Override
+                        public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                            startPostponedEnterTransition();
+                            return false;
+                        }
+                    })
                     .thumbnail(0.5f)
                     .crossFade()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -129,7 +151,7 @@ public class SlideshowDialogFragment extends DialogFragment {
 
         @Override
         public int getCount() {
-            return images.size();
+            return photos.size();
         }
 
         @Override

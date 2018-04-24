@@ -1,8 +1,10 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
+import android.widget.ImageView;
+
 import com.arellomobile.mvp.viewstate.strategy.OneExecutionStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
+import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
 import com.example.alexandermelnikov.yandexgallerytask.ui.BaseView;
 
 import java.util.ArrayList;
@@ -17,9 +19,9 @@ public interface MainView extends BaseView {
 
     void setupEditTextHint(String hintObject);
 
-    void showImagesWithAnimation(List<Image> images);
+    void showImagesWithAnimation(List<Photo> photos);
 
-    void showImagesNoAnimation(List<Image> images);
+    void showImagesNoAnimation(List<Photo> photos);
 
     void hideImagesWithAnimation();
 
@@ -55,5 +57,5 @@ public interface MainView extends BaseView {
 
     void showEmptySearchResultMessage();
 
-    void openGalleryItemPreviewDialog(ArrayList<Image> images, int position);
+    void openGalleryItemPreviewDialog(ArrayList<Photo> photos, int position, ImageView sharedImageView);
 }

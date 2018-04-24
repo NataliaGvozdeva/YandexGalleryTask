@@ -68,4 +68,6 @@ dependencies {
     implementation 'com.afollestad.material-dialogs:core:0.9.6.0'
     //Calligraphy
     compile 'uk.co.chrisjenx:calligraphy:2.3.0'
+    //PhotoView
+    implementation 'com.github.chrisbanes:PhotoView:2.1.3'
 }

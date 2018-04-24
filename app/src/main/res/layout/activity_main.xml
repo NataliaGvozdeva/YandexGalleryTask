@@ -87,7 +87,7 @@
             android:layout_centerHorizontal="true"
             android:textSize="16sp"
             android:textColor="@android:color/black"
-            android:text="Start searching images now"
+            android:text="Start searching photos now"
             android:id="@+id/textView" />
 
         <ImageView
@@ -96,7 +96,7 @@
             android:layout_height="50dp"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:src="@drawable/ic_getty_icon" />
+            android:src="@drawable/iv_pixels_logo" />
 
     </RelativeLayout>
 

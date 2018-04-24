@@ -1,13 +1,13 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
+import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,6 +19,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -28,11 +29,10 @@ import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
-import com.daimajia.androidanimations.library.sliders.SlideInDownAnimator;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.SortMethodsDialogAdapter;
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Image;
+import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
 import com.example.alexandermelnikov.yandexgallerytask.ui.image_fullscreen_dialog.SlideshowDialogFragment;
 import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
 import com.jakewharton.rxbinding2.view.RxView;
@@ -80,7 +80,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<Image>(), mMainActivityPresenter);
+        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<Photo>(), mMainActivityPresenter);
         rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), Constants.DEFAULT_PORTRAIT_NUM_OF_COLUMNS) {
             @Override
             public boolean canScrollVertically() {
@@ -155,16 +155,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void showImagesWithAnimation(List<Image> images) {
-        mGalleryAdapter.replaceData(images);
+    public void showImagesWithAnimation(List<Photo> photos) {
+        mGalleryAdapter.replaceData(photos);
         YoYo.with(Techniques.SlideInUp)
                 .duration(500)
                 .playOn(layoutGalleryContainer);
     }
 
     @Override
-    public void showImagesNoAnimation(List<Image> images) {
-        mGalleryAdapter.replaceData(images);
+    public void showImagesNoAnimation(List<Photo> photos) {
+        mGalleryAdapter.replaceData(photos);
     }
 
     @Override
@@ -324,14 +324,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void openGalleryItemPreviewDialog(ArrayList<Image> images, int position) {
+    public void openGalleryItemPreviewDialog(ArrayList<Photo> photos, int position, ImageView sharedImageView) {
         Bundle args = new Bundle();
-        args.putSerializable("images", images);
+        args.putSerializable("photos", photos);
         args.putInt("position", position);
 
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         SlideshowDialogFragment fragment = SlideshowDialogFragment.newInstance();
         fragment.setArguments(args);
+        ft.addSharedElement(sharedImageView, ViewCompat.getTransitionName(sharedImageView));
         fragment.show(ft, "slideshow");
     }
 
