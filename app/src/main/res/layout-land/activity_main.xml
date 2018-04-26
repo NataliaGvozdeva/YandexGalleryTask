@@ -220,20 +220,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar_layout"
-        android:layout_marginTop="12dp"
         android:descendantFocusability="blocksDescendants"
         android:visibility="gone"
-        tools:visibility="visible">
+        tools:visibility="gone">
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_history"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingVertical="10dp"
             android:overScrollMode="never"
             android:scrollbars="vertical"
             tools:listitem="@layout/item_history"/>
 
     </RelativeLayout>
-
 
 </RelativeLayout>

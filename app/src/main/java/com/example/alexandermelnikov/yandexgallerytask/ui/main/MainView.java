@@ -25,6 +25,12 @@ public interface MainView extends BaseView {
 
     void showImagesNoAnimation(ArrayList<ImageSrc> sources);
 
+    void showHistoryNoAnimation(ArrayList<ImageRequest> requests);
+
+    void showHistoryWithAnimation(ArrayList<ImageRequest> requests);
+
+    void hideHistory();
+
     void hideImagesWithAnimation();
 
     void showProgressBar();

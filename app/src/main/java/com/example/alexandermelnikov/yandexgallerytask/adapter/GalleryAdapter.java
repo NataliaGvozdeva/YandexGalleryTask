@@ -51,7 +51,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
     }
 
     public interface OnGalleryItemClickListener {
-        void onGalleryItemClicked(int poition, ImageView sharedImageView);
+        void onGalleryItemClicked(int position);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
                 .into(holder.iv_thumbnail);
 
         RxView.clicks(holder.iv_thumbnail)
-                .subscribe(v -> listener.onGalleryItemClicked(holder.getAdapterPosition(), holder.iv_thumbnail));
+                .subscribe(v -> listener.onGalleryItemClicked(holder.getAdapterPosition()));
     }
 
     @Override

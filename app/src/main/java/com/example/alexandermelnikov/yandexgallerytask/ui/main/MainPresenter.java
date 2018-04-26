@@ -8,6 +8,7 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
+import com.example.alexandermelnikov.yandexgallerytask.adapter.HistoryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.api.ApiHelper;
 import com.example.alexandermelnikov.yandexgallerytask.data.ImageRequestsRepository;
 import com.example.alexandermelnikov.yandexgallerytask.data.ImageSrcRepository;
@@ -22,7 +23,7 @@ import javax.inject.Inject;
 
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.ImagesResultHandler,
-        GalleryAdapter.OnGalleryItemClickListener {
+        GalleryAdapter.OnGalleryItemClickListener, HistoryAdapter.OnHistoryItemClickListener {
     private static final String TAG = "MyTag";
 
     @Inject
@@ -45,11 +46,14 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
 
     private boolean clearButtonBackModeOn;
 
+    private boolean historyIsShowing;
+
     public MainPresenter() {
         GalleryTaskApp.getAppComponent().inject(this);
         mSearchInput = "";
         mCurrentSources = new ArrayList<>();
         clearButtonBackModeOn = false;
+        historyIsShowing = false;
     }
 
     @Override
@@ -60,6 +64,10 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         //Check if mCurrentSources is not empty and show those previously loaded images if so
         if (!mCurrentSources.isEmpty()) {
             showImages(false);
+        }
+
+        if (historyIsShowing) {
+            showHistoryRequest(false);
         }
 
         getViewState().setupEditTextHint(mCurrentHintObject);
@@ -78,15 +86,21 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
 
     public void searchInputChanges(String input) {
         mSearchInput = input;
-        if (clearButtonBackModeOn) {
+        if (!input.isEmpty() && clearButtonBackModeOn) {
             getViewState().animateBackButtonToClear();
             clearButtonBackModeOn = false;
         }
     }
 
     public void loadImagesRequest(String phrase) {
+        if (historyIsShowing) {
+            hideHistory();
+        }
+
         mLastImagesRequestPhrase = phrase;
         if (!phrase.isEmpty()) {
+            getViewState().animateSearchButton();
+            getViewState().hideKeyboard();
             /*
              * Verify if request by the given phrase has not yet been made
              * If it has been made previously then get image sources from Realm
@@ -95,14 +109,13 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
             ImageRequest similarRequestFromDb = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(phrase);
             if (similarRequestFromDb == null) {
                 GalleryTaskApp.getApiHelper().getImages(phrase, this);
-                getViewState().animateSearchButton();
                 getViewState().showProgressBar();
-                getViewState().hideKeyboard();
             } else {
                 boolean sourcesEmpty = mCurrentSources.isEmpty();
                 mCurrentSources = imageSrcRepository.getImageSrcByRequestPhrase(phrase);
                 showImages(sourcesEmpty);
                 mLastLoadedImageRequest = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(phrase);
+                imageRequestsRepository.updateImageRequestDateByPhrase(mLastLoadedImageRequest.getPhrase());
             }
         } else {
             getViewState().animateEmptySearchBar();
@@ -112,15 +125,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     @Override
     public void onImagesResultSuccessfulResponse(ImageRequest imageRequest, ArrayList<ImageSrc> imageSources) {
         if (!imageSources.isEmpty()) {
-/*            if (mCurrentSources.isEmpty()) {
-                mCurrentSources.clear();
-                mCurrentSources.addAll(imageSources);
-                showImages(true);
-            } else {
-                mCurrentSources.clear();
-                mCurrentSources.addAll(imageSources);
-                showImages(false);
-            }*/
             boolean sourcesEmpty = mCurrentSources.isEmpty();
             mCurrentSources.clear();
             mCurrentSources.addAll(imageSources);
@@ -179,8 +183,34 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     }
 
     @Override
-    public void onGalleryItemClicked(int position, ImageView sharedImageView) {
+    public void onGalleryItemClicked(int position) {
         getViewState().openGalleryItemPreviewDialog(mLastLoadedImageRequest, position);
+    }
+
+    @Override
+    public void onHistoryItemClicked(String requestPhrase) {
+        hideHistory();
+        if (mSearchInput.isEmpty()) {
+            clearButtonBackModeOn = true;
+            getViewState().animateClearButtonToBack();
+        }
+        loadImagesRequest(requestPhrase);
+    }
+
+    public void showHistoryRequest(boolean withAnimation) {
+        historyIsShowing = true;
+        if (withAnimation) {
+            getViewState().showHistoryWithAnimation(imageRequestsRepository.getImageRequestsSortedByDateFromRealm());
+        } else {
+            getViewState().showHistoryNoAnimation(imageRequestsRepository.getImageRequestsSortedByDateFromRealm());
+        }
+        getViewState().hideBackground();
+    }
+
+    public void hideHistory() {
+        historyIsShowing = false;
+        getViewState().hideHistory();
+        getViewState().showBackground();
     }
 
     public void apiLogoPressed() {
@@ -191,7 +221,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     private void insertLastRequestAndSourcesToRealm() {
         /*
          * Check if imageRequest with the similar phrase as the last made one has been made before and already in realm
-         * If not then insert new request to the realm, else update request date in the previously made request object
+         * If not then insert new request to the realm
          */
         ImageRequest similarRequestFromDb = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(mLastLoadedImageRequest.getPhrase());
         if (similarRequestFromDb == null) {
@@ -202,8 +232,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
             //Get managed sources from realm and set them to the ImageRequest object
             mCurrentSources = imageSrcRepository.getImageSrcByRequestPhrase(mLastLoadedImageRequest.getPhrase());
             imageRequestsRepository.setImageSrcListForImageRequest(mLastLoadedImageRequest, mCurrentSources);
-        } else {
-            imageRequestsRepository.updateImageRequestDateByPhrase(mLastLoadedImageRequest.getPhrase());
         }
     }
 }

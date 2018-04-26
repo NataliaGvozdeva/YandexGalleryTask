@@ -62,7 +62,7 @@ public class ImageRequestsRepository {
         ArrayList<ImageRequest> requests;
         Realm realm = Realm.getDefaultInstance();
         requests = new ArrayList<ImageRequest>(realm.where(ImageRequest.class)
-                .sort("requestDate", Sort.ASCENDING)
+                .sort("requestDate", Sort.DESCENDING)
                 .findAll());
         return requests;
     }

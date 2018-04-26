@@ -1,6 +1,7 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -12,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -34,6 +36,7 @@ import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
+import com.example.alexandermelnikov.yandexgallerytask.adapter.HistoryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 import com.example.alexandermelnikov.yandexgallerytask.ui.image_fullscreen_dialog.SlideshowDialogFragment;
@@ -60,8 +63,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
-    CompositeDisposable mDisposable = new CompositeDisposable();
-    GalleryAdapter mGalleryAdapter;
+    private CompositeDisposable mDisposable = new CompositeDisposable();
+    private GalleryAdapter mGalleryAdapter;
+    private HistoryAdapter mHistoryAdapter;
 
     @BindView(R.id.btn_clear) ImageButton btnClear;
     @BindView(R.id.btn_search) ImageButton btnSearch;
@@ -75,6 +79,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @BindView(R.id.sv_mainscroll) ScrollView scGalleryScroll;
     @BindView(R.id.main_background) ConstraintLayout layoutBackground;
     @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
+    @BindView(R.id.btn_history) Button btnHistory;
     @BindView(R.id.btn_info) Button btnInfo;
     @BindView(R.id.history_container) RelativeLayout historyViewGroup;
     @BindView(R.id.rv_history) RecyclerView rvHistory;
@@ -95,6 +100,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             recyclerNumberOfColumns = Constants.DEFAULT_LANDSCAPE_NUM_OF_COLUMNS;
         }
 
+        //Setup gallery RecyclerView
         mGalleryAdapter = new GalleryAdapter(this, new ArrayList<ImageSrc>(), mMainActivityPresenter);
         rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), recyclerNumberOfColumns) {
             @Override
@@ -103,6 +109,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             }
         });
         rvImages.setAdapter(mGalleryAdapter);
+
+        //Setup history RecyclerView
+        mHistoryAdapter = new HistoryAdapter(this, new ArrayList<ImageRequest>(), mMainActivityPresenter);
+        rvHistory.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        rvHistory.setAdapter(mHistoryAdapter);
 
         TypedArray hintObjects = getResources().obtainTypedArray(R.array.search_hint_objects);
         Random random = new Random();
@@ -131,15 +142,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         Disposable searchInputChanges = RxTextView.textChanges(etSearch)
                 .debounce(150, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
                 .map(charSequence -> charSequence.toString())
-                .filter(text -> !text.isEmpty())
-                .subscribe(text -> {
-                    mMainActivityPresenter.searchInputChanges(text);
-                });
+                .subscribe(text -> mMainActivityPresenter.searchInputChanges(text));
 
         //DEBUG
         btnSearch.setOnLongClickListener(v -> exportDatabase());
 
-        btnInfo.setOnClickListener(v -> Log.d(TAG, "attachInputListeners: info clicked"));
+        Disposable historyButton = RxView.clicks(btnHistory)
+                .subscribe(o -> mMainActivityPresenter.showHistoryRequest(true));
 
         Disposable logoClick = RxView.clicks(ivApiLogo)
                 .subscribe(o -> mMainActivityPresenter.apiLogoPressed());
@@ -154,7 +163,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             }
         });
 
-        mDisposable.addAll(clearButton, searchButton, searchInputChanges);
+        mDisposable.addAll(clearButton, searchButton, searchInputChanges, historyButton);
     }
 
     @Override
@@ -190,27 +199,61 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
+    public void showHistoryNoAnimation(ArrayList<ImageRequest> requests) {
+        btnHistory.setClickable(false);
+        mHistoryAdapter.replaceData(requests);
+        historyViewGroup.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void showHistoryWithAnimation(ArrayList<ImageRequest> requests) {
+        btnHistory.setClickable(false);
+        mHistoryAdapter.replaceData(requests);
+        historyViewGroup.setVisibility(View.VISIBLE);
+        YoYo.with(Techniques.SlideInUp)
+                .duration(600)
+                .playOn(historyViewGroup);
+    }
+
+    @Override
+    public void hideHistory() {
+        btnHistory.setClickable(true);
+        YoYo.with(Techniques.SlideOutDown)
+                .withListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        super.onAnimationCancel(animation);
+                        historyViewGroup.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        historyViewGroup.setVisibility(View.GONE);
+                    }
+                })
+                .duration(600)
+                .playOn(historyViewGroup);
+    }
+
+    @Override
     public void hideImagesWithAnimation() {
         YoYo.with(Techniques.SlideOutDown)
                 .duration(500)
-                .withListener(new Animator.AnimatorListener() {
+                .withListener(new AnimatorListenerAdapter() {
                     @Override
-                    public void onAnimationStart(Animator animator) {}
-
-                    @Override
-                    public void onAnimationEnd(Animator animator) {
+                    public void onAnimationCancel(Animator animation) {
+                        super.onAnimationCancel(animation);
                         mGalleryAdapter.clearData();
                         scGalleryScroll.setVisibility(View.GONE);
                     }
 
                     @Override
-                    public void onAnimationCancel(Animator animator) {
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
                         mGalleryAdapter.clearData();
                         scGalleryScroll.setVisibility(View.GONE);
                     }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animator) {}
                 })
                 .playOn(layoutGalleryViewGroup);
     }
@@ -229,12 +272,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void showBackground() {
-        layoutBackground.setVisibility(View.VISIBLE);
+        layoutBackground.animate()
+                .alpha(1.0f)
+                .setDuration(300);
     }
 
     @Override
     public void hideBackground() {
-        layoutBackground.setVisibility(View.INVISIBLE);
+        layoutBackground.animate()
+                .alpha(0.0f)
+                .setDuration(300);
     }
 
     @Override
@@ -351,8 +398,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void onBackPressed() {
-        if (layoutBackground.getVisibility() == View.INVISIBLE) {
+        if (scGalleryScroll.getVisibility() == View.VISIBLE) {
             mMainActivityPresenter.hideImages();
+        } else if (historyViewGroup.getVisibility() == View.VISIBLE) {
+            mMainActivityPresenter.hideHistory();
         } else {
             super.onBackPressed();
         }

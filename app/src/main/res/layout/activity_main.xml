@@ -220,7 +220,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/toolbar_layout"
-        android:layout_marginTop="10dp"
         android:descendantFocusability="blocksDescendants"
         android:visibility="gone"
         tools:visibility="gone">
@@ -229,6 +228,7 @@
             android:id="@+id/rv_history"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingVertical="10dp"
             android:overScrollMode="never"
             android:scrollbars="vertical"
             tools:listitem="@layout/item_history"/>
