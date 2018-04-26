@@ -80,7 +80,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/progressBar"
+            app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/button_container"
             app:layout_constraintVertical_bias="0.5">
 
@@ -176,9 +176,12 @@
                     android:id="@+id/tv_search_header"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:paddingEnd="60dp"
                     android:textColor="@color/gray_md700"
                     android:layout_centerVertical="true"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
 
                 <TextView
                     android:id="@+id/tv_results_counter"
@@ -212,6 +215,25 @@
 
     </ScrollView>
 
+    <RelativeLayout
+        android:id="@+id/history_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar_layout"
+        android:layout_marginTop="12dp"
+        android:descendantFocusability="blocksDescendants"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv_history"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            android:scrollbars="vertical"
+            tools:listitem="@layout/item_history"/>
+
+    </RelativeLayout>
 
 
 </RelativeLayout>

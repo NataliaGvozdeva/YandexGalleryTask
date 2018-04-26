@@ -1,5 +1,6 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -7,37 +8,47 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
-import com.example.alexandermelnikov.yandexgallerytask.api.ImagesResultHandler;
+import com.example.alexandermelnikov.yandexgallerytask.api.ApiHelper;
+import com.example.alexandermelnikov.yandexgallerytask.data.ImageRequestsRepository;
+import com.example.alexandermelnikov.yandexgallerytask.data.ImageSrcRepository;
 import com.example.alexandermelnikov.yandexgallerytask.data.UserDataRepository;
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
+import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
+import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.inject.Inject;
 
 
 @InjectViewState
-public class MainPresenter extends MvpPresenter<MainView> implements ImagesResultHandler,
+public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.ImagesResultHandler,
         GalleryAdapter.OnGalleryItemClickListener {
     private static final String TAG = "MyTag";
 
     @Inject
-    UserDataRepository mUserDataRep;
+    UserDataRepository userDataRepository;
+
+    @Inject
+    ImageRequestsRepository imageRequestsRepository;
+
+    @Inject
+    ImageSrcRepository imageSrcRepository;
+
 
     private String mSearchInput;
     private String mCurrentHintObject;
 
-    private String lastImagesRequestPhrase;
+    private String mLastImagesRequestPhrase;
 
-    private ArrayList<Photo> mCurrentPhotos;
+    private ImageRequest mLastLoadedImageRequest;
+    private ArrayList<ImageSrc> mCurrentSources;
 
     private boolean clearButtonBackModeOn;
 
     public MainPresenter() {
         GalleryTaskApp.getAppComponent().inject(this);
         mSearchInput = "";
-        mCurrentPhotos = new ArrayList<>();
+        mCurrentSources = new ArrayList<>();
         clearButtonBackModeOn = false;
     }
 
@@ -46,8 +57,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
         super.attachView(view);
         getViewState().attachInputListeners();
 
-        //Check if mCurrentPhotos is not empty and show those previously loaded images if so
-        if (!mCurrentPhotos.isEmpty()) {
+        //Check if mCurrentSources is not empty and show those previously loaded images if so
+        if (!mCurrentSources.isEmpty()) {
             showImages(false);
         }
 
@@ -74,34 +85,59 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
     }
 
     public void loadImagesRequest(String phrase) {
-        lastImagesRequestPhrase = phrase;
+        mLastImagesRequestPhrase = phrase;
         if (!phrase.isEmpty()) {
-            GalleryTaskApp.getApiHelper().getImages(phrase, this);
-            getViewState().animateSearchButton();
-            getViewState().showProgressBar();
-            getViewState().hideKeyboard();
+            /*
+             * Verify if request by the given phrase has not yet been made
+             * If it has been made previously then get image sources from Realm
+             * Request images from api otherwise
+             */
+            ImageRequest similarRequestFromDb = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(phrase);
+            if (similarRequestFromDb == null) {
+                GalleryTaskApp.getApiHelper().getImages(phrase, this);
+                getViewState().animateSearchButton();
+                getViewState().showProgressBar();
+                getViewState().hideKeyboard();
+            } else {
+                boolean sourcesEmpty = mCurrentSources.isEmpty();
+                mCurrentSources = imageSrcRepository.getImageSrcByRequestPhrase(phrase);
+                showImages(sourcesEmpty);
+                mLastLoadedImageRequest = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(phrase);
+            }
         } else {
             getViewState().animateEmptySearchBar();
         }
     }
 
     @Override
-    public void onImagesResultPassed(List<Photo> photos) {
-        if (!photos.isEmpty()) {
-            if (mCurrentPhotos.isEmpty()) {
-                mCurrentPhotos.clear();
-                mCurrentPhotos.addAll(photos);
+    public void onImagesResultSuccessfulResponse(ImageRequest imageRequest, ArrayList<ImageSrc> imageSources) {
+        if (!imageSources.isEmpty()) {
+/*            if (mCurrentSources.isEmpty()) {
+                mCurrentSources.clear();
+                mCurrentSources.addAll(imageSources);
                 showImages(true);
             } else {
-                mCurrentPhotos.clear();
-                mCurrentPhotos.addAll(photos);
+                mCurrentSources.clear();
+                mCurrentSources.addAll(imageSources);
                 showImages(false);
-            }
+            }*/
+            boolean sourcesEmpty = mCurrentSources.isEmpty();
+            mCurrentSources.clear();
+            mCurrentSources.addAll(imageSources);
+            showImages(sourcesEmpty);
 
+            mLastLoadedImageRequest = imageRequest;
+            insertLastRequestAndSourcesToRealm();
         } else {
             getViewState().showEmptySearchResultMessage();
         }
         getViewState().hideProgressBar();
+    }
+
+    @Override
+    public void onImagesResultFailure(String message) {
+        getViewState().hideProgressBar();
+        getViewState().showSnackbarMessage(message);
     }
 
     public void clearButtonPressed() {
@@ -109,7 +145,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
             if (!mSearchInput.isEmpty()) {
                 mSearchInput = "";
                 getViewState().clearSearchInput();
-                if (!mCurrentPhotos.isEmpty()) {
+                if (!mCurrentSources.isEmpty()) {
                     clearButtonBackModeOn = true;
                     getViewState().animateClearButtonToBack();
                 } else {
@@ -123,16 +159,16 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
 
     private void showImages(boolean withAnimation) {
         if (withAnimation) {
-            getViewState().showImagesWithAnimation(mCurrentPhotos);
+            getViewState().showImagesWithAnimation(mCurrentSources);
         } else {
-            getViewState().showImagesNoAnimation(mCurrentPhotos);
+            getViewState().showImagesNoAnimation(mCurrentSources);
         }
         getViewState().hideBackground();
-        getViewState().showHeader(lastImagesRequestPhrase, mCurrentPhotos.size());
+        getViewState().showHeader(mLastImagesRequestPhrase, mCurrentSources.size());
     }
 
     public void hideImages() {
-        mCurrentPhotos.clear();
+        mCurrentSources.clear();
         getViewState().hideImagesWithAnimation();
         getViewState().hideHeader();
         getViewState().showBackground();
@@ -144,10 +180,30 @@ public class MainPresenter extends MvpPresenter<MainView> implements ImagesResul
 
     @Override
     public void onGalleryItemClicked(int position, ImageView sharedImageView) {
-        getViewState().openGalleryItemPreviewDialog(mCurrentPhotos, position, sharedImageView);
+        getViewState().openGalleryItemPreviewDialog(mLastLoadedImageRequest, position);
     }
 
     public void apiLogoPressed() {
         getViewState().startApiWebsiteIntent();
+    }
+
+
+    private void insertLastRequestAndSourcesToRealm() {
+        /*
+         * Check if imageRequest with the similar phrase as the last made one has been made before and already in realm
+         * If not then insert new request to the realm, else update request date in the previously made request object
+         */
+        ImageRequest similarRequestFromDb = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(mLastLoadedImageRequest.getPhrase());
+        if (similarRequestFromDb == null) {
+            imageRequestsRepository.insertImageRequestToRealm(mLastLoadedImageRequest);
+            for (ImageSrc src : mCurrentSources) {
+                imageSrcRepository.insertImageSrcToRealm(src);
+            }
+            //Get managed sources from realm and set them to the ImageRequest object
+            mCurrentSources = imageSrcRepository.getImageSrcByRequestPhrase(mLastLoadedImageRequest.getPhrase());
+            imageRequestsRepository.setImageSrcListForImageRequest(mLastLoadedImageRequest, mCurrentSources);
+        } else {
+            imageRequestsRepository.updateImageRequestDateByPhrase(mLastLoadedImageRequest.getPhrase());
+        }
     }
 }

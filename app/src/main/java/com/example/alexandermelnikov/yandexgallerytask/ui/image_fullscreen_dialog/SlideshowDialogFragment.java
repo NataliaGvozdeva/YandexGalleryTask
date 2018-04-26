@@ -6,24 +6,24 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.transition.TransitionInflater;
+import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
+import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
 import com.example.alexandermelnikov.yandexgallerytask.R;
+import com.example.alexandermelnikov.yandexgallerytask.data.ImageSrcRepository;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
+import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 import com.github.chrisbanes.photoview.PhotoView;
 
 import java.util.ArrayList;
+
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -31,16 +31,22 @@ import butterknife.ButterKnife;
 
 public class SlideshowDialogFragment extends DialogFragment {
 
+    public final String REQUEST_PHRASE = "request_phrase";
+    public final String POSITION = "position";
+
     @BindView(R.id.viewpager)
     ViewPager viewPager;
     @BindView(R.id.title)
     TextView tvTitle;
     @BindView(R.id.lbl_count)
     TextView lblCount;
-    @BindView(R.id.uri)
-    TextView tvUri;
+    @BindView(R.id.url)
+    TextView tvUrl;
 
-    private ArrayList<Photo> photos;
+    @Inject
+    ImageSrcRepository imageSrcRepository;
+
+    private ArrayList<ImageSrc> sources;
     private MyViewPagerAdapter myViewPagerAdapter;
     private int selectedPosition = 0;
 
@@ -48,6 +54,7 @@ public class SlideshowDialogFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        GalleryTaskApp.getAppComponent().inject(this);
         setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
     }
 
@@ -58,8 +65,9 @@ public class SlideshowDialogFragment extends DialogFragment {
         View v = inflater.inflate(R.layout.fragment_image_slider, container, false);
         ButterKnife.bind(this, v);
 
-        photos = (ArrayList<Photo>) getArguments().getSerializable("photos");
-        selectedPosition = getArguments().getInt("position");
+       /// sources = (ArrayList<ImageSrc>) getArguments().getSerializable("sources");
+        sources = imageSrcRepository.getImageSrcByRequestPhrase(getArguments().getString(REQUEST_PHRASE));
+        selectedPosition = getArguments().getInt(POSITION);
 
         myViewPagerAdapter = new MyViewPagerAdapter();
         viewPager.setAdapter(myViewPagerAdapter);
@@ -94,11 +102,12 @@ public class SlideshowDialogFragment extends DialogFragment {
     };
 
     private void displayMetaInfo(int position) {
-        lblCount.setText(new StringBuilder("" + (position + 1)).append(" of ").append(photos.size()).toString());
+        lblCount.setText(new StringBuilder("" + (position + 1)).append(" of ").append(sources.size()).toString());
 
-        Photo photo = photos.get(position);
-        tvTitle.setText(new StringBuilder("Photo by: ").append(photo.getPhotographer()));
-        //tvUri.setText(photo.getReferral_destinations().get(0).getUri());
+        ImageSrc source = sources.get(position);
+        tvTitle.setText(new StringBuilder("Photo by: ").append(source.getPhotographer()));
+        tvUrl.setText(source.getPexelsUrl());
+        Linkify.addLinks(tvUrl, Linkify.WEB_URLS);
     }
 
 
@@ -115,9 +124,9 @@ public class SlideshowDialogFragment extends DialogFragment {
             layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             View view = layoutInflater.inflate(R.layout.image_fullscreen, container, false);
             PhotoView imageViewPreview = (PhotoView) view.findViewById(R.id.iv_preview);
-            Photo photo = photos.get(position);
+            ImageSrc source = sources.get(position);
 
-            Glide.with(getActivity()).load(photo.getSrc().getLarge())
+            Glide.with(getActivity()).load(source.getLargeUrl())
                     .thumbnail(0.5f)
                     .crossFade()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -129,7 +138,7 @@ public class SlideshowDialogFragment extends DialogFragment {
 
         @Override
         public int getCount() {
-            return photos.size();
+            return sources.size();
         }
 
         @Override

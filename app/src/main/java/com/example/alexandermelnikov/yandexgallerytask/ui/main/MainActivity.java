@@ -12,7 +12,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -20,29 +19,30 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
+import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
+import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 import com.example.alexandermelnikov.yandexgallerytask.ui.image_fullscreen_dialog.SlideshowDialogFragment;
 import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -51,6 +51,7 @@ import butterknife.ButterKnife;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.realm.Realm;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends MvpAppCompatActivity implements MainView{
@@ -70,10 +71,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @BindView(R.id.tv_results_counter) TextView tvResultsCounter;
     @BindView(R.id.progressBar) ProgressBar progressBar;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
-    @BindView(R.id.gallery_container) RelativeLayout layoutGalleryContainer;
-    @BindView(R.id.main_background)
-    ConstraintLayout layoutBackground;
+    @BindView(R.id.gallery_container) RelativeLayout layoutGalleryViewGroup;
+    @BindView(R.id.sv_mainscroll) ScrollView scGalleryScroll;
+    @BindView(R.id.main_background) ConstraintLayout layoutBackground;
     @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
+    @BindView(R.id.btn_info) Button btnInfo;
+    @BindView(R.id.history_container) RelativeLayout historyViewGroup;
+    @BindView(R.id.rv_history) RecyclerView rvHistory;
 
 
     @Override
@@ -91,7 +95,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             recyclerNumberOfColumns = Constants.DEFAULT_LANDSCAPE_NUM_OF_COLUMNS;
         }
 
-        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<Photo>(), mMainActivityPresenter);
+        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<ImageSrc>(), mMainActivityPresenter);
         rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), recyclerNumberOfColumns) {
             @Override
             public boolean canScrollVertically() {
@@ -132,11 +136,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                     mMainActivityPresenter.searchInputChanges(text);
                 });
 
-       /* Disposable logoClick = RxView.clicks(ivApiLogo)
-                .subscribe(o -> {
-                    Log.d(TAG, "attachInputListeners: api logo clicked");
-                    mMainActivityPresenter.apiLogoPressed();});
-*/
+        //DEBUG
+        btnSearch.setOnLongClickListener(v -> exportDatabase());
+
+        btnInfo.setOnClickListener(v -> Log.d(TAG, "attachInputListeners: info clicked"));
+
+        Disposable logoClick = RxView.clicks(ivApiLogo)
+                .subscribe(o -> mMainActivityPresenter.apiLogoPressed());
+
         etSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
@@ -168,16 +175,18 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void showImagesWithAnimation(List<Photo> photos) {
-        mGalleryAdapter.replaceData(photos);
+    public void showImagesWithAnimation(ArrayList<ImageSrc> sources) {
+        scGalleryScroll.setVisibility(View.VISIBLE);
+        mGalleryAdapter.replaceData(sources);
         YoYo.with(Techniques.SlideInUp)
-                .duration(500)
-                .playOn(layoutGalleryContainer);
+                .duration(600)
+                .playOn(layoutGalleryViewGroup);
     }
 
     @Override
-    public void showImagesNoAnimation(List<Photo> photos) {
-        mGalleryAdapter.replaceData(photos);
+    public void showImagesNoAnimation(ArrayList<ImageSrc> sources) {
+        scGalleryScroll.setVisibility(View.VISIBLE);
+        mGalleryAdapter.replaceData(sources);
     }
 
     @Override
@@ -191,27 +200,31 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                     @Override
                     public void onAnimationEnd(Animator animator) {
                         mGalleryAdapter.clearData();
+                        scGalleryScroll.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onAnimationCancel(Animator animator) {
                         mGalleryAdapter.clearData();
+                        scGalleryScroll.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onAnimationRepeat(Animator animator) {}
                 })
-                .playOn(layoutGalleryContainer);
+                .playOn(layoutGalleryViewGroup);
     }
 
     @Override
     public void showProgressBar() {
         progressBar.setVisibility(View.VISIBLE);
+        progressBar.setAlpha(1);
     }
 
     @Override
     public void hideProgressBar() {
         progressBar.setVisibility(View.INVISIBLE);
+        progressBar.setAlpha(0);
     }
 
     @Override
@@ -307,10 +320,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void showEmptySearchResultMessage() {
-        Log.d(TAG, "showEmptySearchResultMessage: ");
         Snackbar.make(findViewById(R.id.main_layout), getResources().getString(R.string.empty_search_result),
                 Snackbar.LENGTH_SHORT).show();
     }
+
+    @Override
+    public void showSnackbarMessage(String message) {
+        Snackbar.make(findViewById(R.id.main_layout), message,
+                Snackbar.LENGTH_SHORT).show();
+    }
+
 
     @Override
     public void startApiWebsiteIntent() {
@@ -320,13 +339,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void openGalleryItemPreviewDialog(ArrayList<Photo> photos, int position, ImageView sharedImageView) {
-        Bundle args = new Bundle();
-        args.putSerializable("photos", photos);
-        args.putInt("position", position);
-
+    public void openGalleryItemPreviewDialog(ImageRequest imageRequest, int position) {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         SlideshowDialogFragment fragment = new SlideshowDialogFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(fragment.REQUEST_PHRASE, imageRequest.getPhrase());
+        args.putInt(fragment.POSITION, position);
         fragment.setArguments(args);
         fragment.show(ft, "slideshow");
     }
@@ -338,5 +356,40 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         } else {
             super.onBackPressed();
         }
+    }
+
+
+    //REALM DEBUG
+    public boolean exportDatabase() {
+
+        Log.d(TAG, "exportDatabase");
+        // init realm
+        Realm realm = Realm.getDefaultInstance();
+
+        File exportRealmFile = null;
+        // get or create an "export.realm" file
+        exportRealmFile = new File(this.getExternalCacheDir(), "export.realm");
+
+        // if "export.realm" already exists, delete
+        exportRealmFile.delete();
+
+        // copy current realm to "export.realm"
+        realm.writeCopyTo(exportRealmFile);
+
+
+        realm.close();
+
+        // init email intent and add export.realm as attachment
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("plain/text");
+        intent.putExtra(Intent.EXTRA_EMAIL, "melnikov.ws@gmail.com");
+        intent.putExtra(Intent.EXTRA_SUBJECT, "My Database");
+        intent.putExtra(Intent.EXTRA_TEXT, "realm database file");
+        Uri u = Uri.fromFile(exportRealmFile);
+        intent.putExtra(Intent.EXTRA_STREAM, u);
+
+        // start email intent
+        startActivity(Intent.createChooser(intent, "title"));
+        return true;
     }
 }

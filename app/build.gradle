@@ -71,3 +71,6 @@ dependencies {
     //PhotoView
     implementation 'com.github.chrisbanes:PhotoView:2.1.3'
 }
+
+//realm
+apply plugin: 'realm-android'

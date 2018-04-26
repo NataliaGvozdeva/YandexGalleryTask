@@ -1,5 +1,7 @@
 package com.example.alexandermelnikov.yandexgallerytask.dagger.module;
 
+import com.example.alexandermelnikov.yandexgallerytask.data.ImageRequestsRepository;
+import com.example.alexandermelnikov.yandexgallerytask.data.ImageSrcRepository;
 import com.example.alexandermelnikov.yandexgallerytask.data.UserDataRepository;
 
 import dagger.Module;
@@ -15,6 +17,16 @@ public class RepositoryModule {
     @Provides
     UserDataRepository provideUserDataRepository() {
         return new UserDataRepository();
+    }
+
+    @Provides
+    ImageRequestsRepository provideImageRequestsRepository() {
+        return new ImageRequestsRepository();
+    }
+
+    @Provides
+    ImageSrcRepository provideImageSrcRepository() {
+        return new ImageSrcRepository();
     }
 
 }

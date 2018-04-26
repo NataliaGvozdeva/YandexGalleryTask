@@ -1,4 +1,4 @@
-package com.example.alexandermelnikov.yandexgallerytask.support.view;
+package com.example.alexandermelnikov.yandexgallerytask.utils.view;
 
 import android.content.Context;
 import android.support.v4.view.ViewPager;
@@ -40,3 +40,4 @@ public class ViewPagerFixed extends ViewPager {
         return false;
     }
 }
+

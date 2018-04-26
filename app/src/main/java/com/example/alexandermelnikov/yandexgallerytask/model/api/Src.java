@@ -1,10 +1,12 @@
 package com.example.alexandermelnikov.yandexgallerytask.model.api;
 
+import java.io.Serializable;
+
 /**
  * Created by AlexMelnikov on 24.04.18.
  */
 
-public class Src {
+public class Src implements Serializable {
     public String original;
     public String large2x;
     public String large;

@@ -2,13 +2,14 @@ package com.example.alexandermelnikov.yandexgallerytask.model.api;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by AlexMelnikov on 17.04.18.
  */
 
-public class ResponseRoot {
+public class ResponseRoot implements Serializable {
     @SerializedName("total_results")
     public int totalResults;
 

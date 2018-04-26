@@ -12,8 +12,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
+import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 import com.jakewharton.rxbinding2.view.RxView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -28,12 +30,12 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
     private static final String TAG = "MyTag";
     
     private Context mContext;
-    private List<Photo> photos;
+    private ArrayList<ImageSrc> sources;
     private OnGalleryItemClickListener listener;
 
-    public GalleryAdapter(Context mContext, List<Photo> photos, OnGalleryItemClickListener listener) {
+    public GalleryAdapter(Context mContext, ArrayList<ImageSrc> sources, OnGalleryItemClickListener listener) {
         this.mContext = mContext;
-        this.photos = photos;
+        this.sources = sources;
         this.listener = listener;
     }
 
@@ -60,13 +62,11 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
 
     @Override
     public void onBindViewHolder(GallaryViewHolder holder, int position) {
-        Photo photo = photos.get(position);
-        Glide.with(mContext).load(photo.getSrc().getSmall())
+        ImageSrc source = sources.get(position);
+        Glide.with(mContext).load(source.getThumbnailUrl())
                 .crossFade()
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(holder.iv_thumbnail);
-
-        ViewCompat.setTransitionName(holder.iv_thumbnail, "sharedTransition" + position);
 
         RxView.clicks(holder.iv_thumbnail)
                 .subscribe(v -> listener.onGalleryItemClicked(holder.getAdapterPosition(), holder.iv_thumbnail));
@@ -74,17 +74,17 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.GallaryV
 
     @Override
     public int getItemCount() {
-        return photos.size();
+        return sources.size();
     }
 
-    public void replaceData(List<Photo> translations) {
-        photos.clear();
-        photos.addAll(translations);
+    public void replaceData(ArrayList<ImageSrc> sourceList) {
+        sources.clear();
+        sources.addAll(sourceList);
         notifyDataSetChanged();
     }
 
     public void clearData() {
-        photos.clear();
+        sources.clear();
         notifyDataSetChanged();
     }
 

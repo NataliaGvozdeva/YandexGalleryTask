@@ -10,4 +10,9 @@
     <string name="results_count">Total:</string>
     <string name="empty_search_result">The search has not given any results</string>
     <string name="start_searching_now">Start searching photos now</string>
+
+    <string name="error_no_connection">No internet connection</string>
+    <string name="error_request_failed">Server does not respond</string>
+    <string name="error_api_key_wrong">Invalid API key</string>
+    <string name="error_api_key_blocked">Application API key is locked</string>
 </resources>

@@ -7,6 +7,8 @@ import com.example.alexandermelnikov.yandexgallerytask.dagger.AppComponent;
 import com.example.alexandermelnikov.yandexgallerytask.dagger.DaggerAppComponent;
 import com.orhanobut.hawk.Hawk;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 
 /**
@@ -24,9 +26,10 @@ public class GalleryTaskApp extends Application {
     public void onCreate() {
         super.onCreate();
 
-        apiHelper = new ApiHelper();
+        apiHelper = new ApiHelper(this);
 
         Hawk.init(this).build();
+        Realm.init(this);
 
         appComponent = DaggerAppComponent.builder().build();
 
@@ -35,6 +38,12 @@ public class GalleryTaskApp extends Application {
                 .setFontAttrId(R.attr.fontPath)
                 .build()
         );
+
+        //REALM MIGRATION
+        /*RealmConfiguration config2 = new RealmConfiguration.Builder()
+                .deleteRealmIfMigrationNeeded()
+                .build();
+        Realm realm = Realm.getInstance(config2);*/
 
     }
 

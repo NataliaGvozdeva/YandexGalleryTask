@@ -11,10 +11,6 @@ import retrofit2.http.Header;
 import retrofit2.http.Query;
 import retrofit2.http.Url;
 
-/**
- * Created by AlexMelnikov on 17.04.18.
- */
-
 public interface ApiService {
 
    @GET("search")
