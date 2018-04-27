@@ -16,8 +16,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
@@ -61,8 +59,6 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends MvpAppCompatActivity implements MainView{
 
-    private static final String TAG = "MyTag";
-
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
     private CompositeDisposable mDisposable = new CompositeDisposable();
@@ -72,21 +68,21 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     private LinearLayoutManager mHistoryLayoutManager;
     private MaterialDialog appInfoDialog;
 
+    @BindView(R.id.progress_bar) ProgressBar progressBar;
+    @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
     @BindView(R.id.btn_clear) ImageButton btnClear;
     @BindView(R.id.btn_search) ImageButton btnSearch;
-    @BindView(R.id.rv_images) RecyclerView rvImages;
-    @BindView(R.id.et_search) EditText etSearch;
+    @BindView(R.id.btn_history) Button btnHistory;
+    @BindView(R.id.btn_info) Button btnInfo;
     @BindView(R.id.tv_search_header) TextView tvHeaderText;
     @BindView(R.id.tv_results_counter) TextView tvResultsCounter;
-    @BindView(R.id.progressBar) ProgressBar progressBar;
+    @BindView(R.id.et_search) EditText etSearch;
+    @BindView(R.id.main_background) ConstraintLayout layoutBackground;
+    @BindView(R.id.history_container) RelativeLayout historyViewGroup;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
     @BindView(R.id.gallery_container) RelativeLayout layoutGalleryViewGroup;
     @BindView(R.id.sv_mainscroll) ScrollView svGalleryScroll;
-    @BindView(R.id.main_background) ConstraintLayout layoutBackground;
-    @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
-    @BindView(R.id.btn_history) Button btnHistory;
-    @BindView(R.id.btn_info) Button btnInfo;
-    @BindView(R.id.history_container) RelativeLayout historyViewGroup;
+    @BindView(R.id.rv_images) RecyclerView rvImages;
     @BindView(R.id.rv_history) RecyclerView rvHistory;
 
 
@@ -162,9 +158,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                 .map(charSequence -> charSequence.toString())
                 .subscribe(text -> mMainActivityPresenter.searchInputChanges(text));
 
-        //DEBUG
-        btnSearch.setOnLongClickListener(v -> exportDatabase());
-
         Disposable historyButton = RxView.clicks(btnHistory)
                 .subscribe(o -> mMainActivityPresenter.showHistoryRequest(true));
 
@@ -174,15 +167,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         Disposable logoClick = RxView.clicks(ivApiLogo)
                 .subscribe(o -> mMainActivityPresenter.apiLogoPressed());
 
-        etSearch.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                if (i == EditorInfo.IME_ACTION_SEARCH) {
-                    mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString());
-                }
-                return false;
+        etSearch.setOnEditorActionListener(((textView, i, keyEvent) -> {
+            if (i == EditorInfo.IME_ACTION_SEARCH) {
+                mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString());
             }
-        });
+            return false;
+        }));
 
         mDisposable.addAll(clearButton, searchButton, searchInputChanges, historyButton, infoButton, logoClick);
     }
@@ -218,6 +208,30 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     public void showImagesNoAnimation(ArrayList<ImageSrc> sources) {
         svGalleryScroll.setVisibility(View.VISIBLE);
         mGalleryAdapter.replaceData(sources);
+    }
+
+    @Override
+    public void hideImagesWithAnimation() {
+        YoYo.with(Techniques.SlideOutDown)
+                .duration(500)
+                .withListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        super.onAnimationCancel(animation);
+                        svGalleryScroll.fullScroll(View.FOCUS_UP);
+                        mGalleryAdapter.clearData();
+                        svGalleryScroll.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        svGalleryScroll.fullScroll(View.FOCUS_UP);
+                        super.onAnimationEnd(animation);
+                        mGalleryAdapter.clearData();
+                        svGalleryScroll.setVisibility(View.GONE);
+                    }
+                })
+                .playOn(layoutGalleryViewGroup);
     }
 
     @Override
@@ -262,36 +276,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void hideImagesWithAnimation() {
-        YoYo.with(Techniques.SlideOutDown)
-                .duration(500)
-                .withListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                        super.onAnimationCancel(animation);
-                        svGalleryScroll.fullScroll(View.FOCUS_UP);
-                        mGalleryAdapter.clearData();
-                        svGalleryScroll.setVisibility(View.GONE);
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        svGalleryScroll.fullScroll(View.FOCUS_UP);
-                        super.onAnimationEnd(animation);
-                        mGalleryAdapter.clearData();
-                        svGalleryScroll.setVisibility(View.GONE);
-                    }
-                })
-                .playOn(layoutGalleryViewGroup);
-    }
-
-    @Override
     public void showAppInfoDialog() {
         if (!appInfoDialog.isShowing()) {
             appInfoDialog.show();
         }
     }
-
 
     @Override
     public void showProgressBar() {
@@ -307,8 +296,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void showBackground() {
+        layoutBackground.setVisibility(View.VISIBLE);
         layoutBackground.animate()
                 .alpha(1.0f)
+                .setListener(new AnimatorListenerAdapter() {})
                 .setDuration(300);
     }
 
@@ -316,6 +307,19 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     public void hideBackground() {
         layoutBackground.animate()
                 .alpha(0.0f)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        super.onAnimationCancel(animation);
+                        layoutBackground.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        layoutBackground.setVisibility(View.GONE);
+                    }
+                })
                 .setDuration(300);
     }
 
@@ -452,7 +456,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     //REALM DEBUG
     public boolean exportDatabase() {
 
-        Log.d(TAG, "exportDatabase");
         // init realm
         Realm realm = Realm.getDefaultInstance();
 

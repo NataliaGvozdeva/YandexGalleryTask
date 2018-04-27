@@ -1,9 +1,5 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
-import android.support.annotation.Nullable;
-import android.util.Log;
-import android.widget.ImageView;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
@@ -12,7 +8,6 @@ import com.example.alexandermelnikov.yandexgallerytask.adapter.HistoryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.api.ApiHelper;
 import com.example.alexandermelnikov.yandexgallerytask.data.ImageRequestsRepository;
 import com.example.alexandermelnikov.yandexgallerytask.data.ImageSrcRepository;
-import com.example.alexandermelnikov.yandexgallerytask.data.UserDataRepository;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 
@@ -24,17 +19,12 @@ import javax.inject.Inject;
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.ImagesResultHandler,
         GalleryAdapter.OnGalleryItemClickListener, HistoryAdapter.OnHistoryItemClickListener {
-    private static final String TAG = "MyTag";
-
-    @Inject
-    UserDataRepository userDataRepository;
 
     @Inject
     ImageRequestsRepository imageRequestsRepository;
 
     @Inject
     ImageSrcRepository imageSrcRepository;
-
 
     private String mSearchInput;
     private String mCurrentHintObject;

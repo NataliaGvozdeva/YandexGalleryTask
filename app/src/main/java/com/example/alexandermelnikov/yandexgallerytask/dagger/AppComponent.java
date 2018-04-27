@@ -9,9 +9,6 @@ import javax.inject.Singleton;
 
 import dagger.Component;
 
-/**
- * Created by AlexMelnikov on 20.04.18.
- */
 
 @Singleton
 @Component(modules = {RepositoryModule.class
