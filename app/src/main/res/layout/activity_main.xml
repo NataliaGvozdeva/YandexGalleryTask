@@ -155,7 +155,7 @@
         android:layout_below="@id/toolbar_layout"
         android:scrollbars="none"
         android:visibility="gone"
-        tools:visibility="gone">
+        tools:visibility="visible">
 
         <LinearLayout
             android:id="@+id/scroll_container"
@@ -205,9 +205,9 @@
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/rv_images"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:overScrollMode="never"
-                    android:scrollbars="vertical"/>
+                    android:scrollbars="vertical" />
 
             </RelativeLayout>
 

@@ -45,7 +45,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     private ArrayList<ImageSrc> mCurrentSources;
 
     private boolean clearButtonBackModeOn;
-
+    private boolean infoDialogIsShowing;
     private boolean historyIsShowing;
 
     public MainPresenter() {
@@ -54,6 +54,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         mCurrentSources = new ArrayList<>();
         clearButtonBackModeOn = false;
         historyIsShowing = false;
+        infoDialogIsShowing = false;
     }
 
     @Override
@@ -65,9 +66,13 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         if (!mCurrentSources.isEmpty()) {
             showImages(false);
         }
-
+        //Check if history recycler has been showing on previous attach
         if (historyIsShowing) {
             showHistoryRequest(false);
+        }
+        //Check if application information dialog has been showing on previous attach
+        if (infoDialogIsShowing) {
+            showApplicationInfo();
         }
 
         getViewState().setupEditTextHint(mCurrentHintObject);
@@ -198,13 +203,18 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     }
 
     public void showHistoryRequest(boolean withAnimation) {
-        historyIsShowing = true;
-        if (withAnimation) {
-            getViewState().showHistoryWithAnimation(imageRequestsRepository.getImageRequestsSortedByDateFromRealm());
+        ArrayList<ImageRequest> imageRequests = imageRequestsRepository.getImageRequestsSortedByDateFromRealm();
+        if (!imageRequests.isEmpty()) {
+            historyIsShowing = true;
+            if (withAnimation) {
+                getViewState().showHistoryWithAnimation(imageRequests);
+            } else {
+                getViewState().showHistoryNoAnimation(imageRequests);
+            }
+            getViewState().hideBackground();
         } else {
-            getViewState().showHistoryNoAnimation(imageRequestsRepository.getImageRequestsSortedByDateFromRealm());
+            getViewState().showEmptyHistroyMessage();
         }
-        getViewState().hideBackground();
     }
 
     public void hideHistory() {
@@ -213,10 +223,26 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         getViewState().showBackground();
     }
 
+    public void showApplicationInfo() {
+        infoDialogIsShowing = true;
+        getViewState().showAppInfoDialog();
+    }
+
+    public void hideApplicationInfo() {
+        infoDialogIsShowing = false;
+    }
+
     public void apiLogoPressed() {
         getViewState().startApiWebsiteIntent();
     }
 
+    public boolean imagesOnScreen() {
+        return !mCurrentSources.isEmpty();
+    }
+
+    public boolean isHistoryIsShowing() {
+        return historyIsShowing;
+    }
 
     private void insertLastRequestAndSourcesToRealm() {
         /*

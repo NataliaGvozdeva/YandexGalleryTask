@@ -44,7 +44,6 @@ public class GalleryTaskApp extends Application {
                 .deleteRealmIfMigrationNeeded()
                 .build();
         Realm realm = Realm.getInstance(config2);*/
-
     }
 
     public static ApiHelper getApiHelper() {

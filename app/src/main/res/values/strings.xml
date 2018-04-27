@@ -1,15 +1,25 @@
 <resources>
-    <string name="app_name">YandexGalleryTask</string>
+    <string name="app_name">World Photos</string>
 
     //activity_main
     <string name="btn_history">History</string>
     <string name="btn_info">About</string>
 
     //MainActivity
-    <string name="search_results">Search results on:</string>
-    <string name="results_count">Total:</string>
+    <string name="search_results">Search results on: %1$s</string>
+    <string name="results_count">Total: %1$d</string>
     <string name="empty_search_result">The search has not given any results</string>
+    <string name="empty_history">The history is empty</string>
     <string name="start_searching_now">Start searching photos now</string>
+    <string name="info_dialog_confirm">Ok</string>
+    <string name="info_dialog_content">
+        World Photos gives you the opportunity to find high quality photos by a search phrase.
+        \n\nImages are provided by <a href="https://www.pexels.com/api/">Pexels API</a>.
+        \nAPI is used in accordance with all guidelines specified in the documentation.
+        \n\nThis application has been created as an admission test task for <a href="https://academy.yandex.ru/events/mobdev/msk-2018/">Yandex School of Mobile Development 2018</a>
+        \n\nDeveloped by <a href="https://github.com/millerovv">Melnikov Alexander</a>
+
+    </string>
 
     <string name="error_no_connection">No internet connection</string>
     <string name="error_request_failed">Server does not respond</string>

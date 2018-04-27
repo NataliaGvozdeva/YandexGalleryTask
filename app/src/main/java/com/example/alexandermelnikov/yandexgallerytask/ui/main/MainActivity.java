@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -30,6 +31,7 @@ import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.arellomobile.mvp.MvpAppCompatActivity;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.daimajia.androidanimations.library.Techniques;
@@ -66,6 +68,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     private CompositeDisposable mDisposable = new CompositeDisposable();
     private GalleryAdapter mGalleryAdapter;
     private HistoryAdapter mHistoryAdapter;
+    private GridLayoutManager mGalleryLayoutManager;
+    private LinearLayoutManager mHistoryLayoutManager;
+    private MaterialDialog appInfoDialog;
 
     @BindView(R.id.btn_clear) ImageButton btnClear;
     @BindView(R.id.btn_search) ImageButton btnSearch;
@@ -76,7 +81,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @BindView(R.id.progressBar) ProgressBar progressBar;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
     @BindView(R.id.gallery_container) RelativeLayout layoutGalleryViewGroup;
-    @BindView(R.id.sv_mainscroll) ScrollView scGalleryScroll;
+    @BindView(R.id.sv_mainscroll) ScrollView svGalleryScroll;
     @BindView(R.id.main_background) ConstraintLayout layoutBackground;
     @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
     @BindView(R.id.btn_history) Button btnHistory;
@@ -100,19 +105,22 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             recyclerNumberOfColumns = Constants.DEFAULT_LANDSCAPE_NUM_OF_COLUMNS;
         }
 
-        //Setup gallery RecyclerView
-        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<ImageSrc>(), mMainActivityPresenter);
-        rvImages.setLayoutManager(new GridLayoutManager(getApplicationContext(), recyclerNumberOfColumns) {
+        mGalleryLayoutManager = new GridLayoutManager(getApplicationContext(), recyclerNumberOfColumns) {
             @Override
             public boolean canScrollVertically() {
                 return false;
             }
-        });
+        };
+        mHistoryLayoutManager = new LinearLayoutManager(getApplicationContext());
+
+        //Setup gallery RecyclerView
+        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<ImageSrc>(), mMainActivityPresenter);
+        rvImages.setLayoutManager(mGalleryLayoutManager);
         rvImages.setAdapter(mGalleryAdapter);
 
         //Setup history RecyclerView
         mHistoryAdapter = new HistoryAdapter(this, new ArrayList<ImageRequest>(), mMainActivityPresenter);
-        rvHistory.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        rvHistory.setLayoutManager(mHistoryLayoutManager);
         rvHistory.setAdapter(mHistoryAdapter);
 
         TypedArray hintObjects = getResources().obtainTypedArray(R.array.search_hint_objects);
@@ -123,6 +131,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         //Prevents the soft keyboard from pushing the view above it
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
+        //Setup appInfoDialog
+        appInfoDialog = new MaterialDialog.Builder(this)
+                .customView(R.layout.dialog_app_info, false)
+                .positiveText(R.string.info_dialog_confirm)
+                .dismissListener(d -> mMainActivityPresenter.hideApplicationInfo())
+                .build();
+
+
+        TextView text = appInfoDialog.getView().findViewById(R.id.tv_content);
+        text.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     @Override
@@ -150,6 +168,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         Disposable historyButton = RxView.clicks(btnHistory)
                 .subscribe(o -> mMainActivityPresenter.showHistoryRequest(true));
 
+        Disposable infoButton = RxView.clicks(btnInfo)
+                .subscribe(o -> mMainActivityPresenter.showApplicationInfo());
+
         Disposable logoClick = RxView.clicks(ivApiLogo)
                 .subscribe(o -> mMainActivityPresenter.apiLogoPressed());
 
@@ -163,7 +184,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             }
         });
 
-        mDisposable.addAll(clearButton, searchButton, searchInputChanges, historyButton);
+        mDisposable.addAll(clearButton, searchButton, searchInputChanges, historyButton, infoButton, logoClick);
     }
 
     @Override
@@ -185,16 +206,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void showImagesWithAnimation(ArrayList<ImageSrc> sources) {
-        scGalleryScroll.setVisibility(View.VISIBLE);
+        svGalleryScroll.setVisibility(View.VISIBLE);
         mGalleryAdapter.replaceData(sources);
         YoYo.with(Techniques.SlideInUp)
                 .duration(600)
                 .playOn(layoutGalleryViewGroup);
+
     }
 
     @Override
     public void showImagesNoAnimation(ArrayList<ImageSrc> sources) {
-        scGalleryScroll.setVisibility(View.VISIBLE);
+        svGalleryScroll.setVisibility(View.VISIBLE);
         mGalleryAdapter.replaceData(sources);
     }
 
@@ -217,19 +239,22 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void hideHistory() {
-        btnHistory.setClickable(true);
         YoYo.with(Techniques.SlideOutDown)
                 .withListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationCancel(Animator animation) {
                         super.onAnimationCancel(animation);
                         historyViewGroup.setVisibility(View.GONE);
+                        btnHistory.setClickable(true);
+                        mHistoryLayoutManager.scrollToPosition(0);
                     }
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         super.onAnimationEnd(animation);
                         historyViewGroup.setVisibility(View.GONE);
+                        btnHistory.setClickable(true);
+                        mHistoryLayoutManager.scrollToPosition(0);
                     }
                 })
                 .duration(600)
@@ -244,19 +269,29 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                     @Override
                     public void onAnimationCancel(Animator animation) {
                         super.onAnimationCancel(animation);
+                        svGalleryScroll.fullScroll(View.FOCUS_UP);
                         mGalleryAdapter.clearData();
-                        scGalleryScroll.setVisibility(View.GONE);
+                        svGalleryScroll.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
+                        svGalleryScroll.fullScroll(View.FOCUS_UP);
                         super.onAnimationEnd(animation);
                         mGalleryAdapter.clearData();
-                        scGalleryScroll.setVisibility(View.GONE);
+                        svGalleryScroll.setVisibility(View.GONE);
                     }
                 })
                 .playOn(layoutGalleryViewGroup);
     }
+
+    @Override
+    public void showAppInfoDialog() {
+        if (!appInfoDialog.isShowing()) {
+            appInfoDialog.show();
+        }
+    }
+
 
     @Override
     public void showProgressBar() {
@@ -335,8 +370,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
                 .duration(500)
                 .playOn(layoutHeader);
         }
-        tvHeaderText.setText(new StringBuilder(getResources().getString(R.string.search_results)).append(" ").append(lastSearchObject));
-        tvResultsCounter.setText(new StringBuilder(getResources().getString(R.string.results_count)).append(" ").append(resultsCount));
+        tvHeaderText.setText(getString(R.string.search_results, lastSearchObject));
+        tvResultsCounter.setText(getString(R.string.results_count, resultsCount));
     }
 
     @Override
@@ -372,11 +407,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
+    public void showEmptyHistroyMessage() {
+        Snackbar.make(findViewById(R.id.main_layout), getResources().getString(R.string.empty_history),
+                Snackbar.LENGTH_SHORT).show();
+    }
+
+    @Override
     public void showSnackbarMessage(String message) {
         Snackbar.make(findViewById(R.id.main_layout), message,
                 Snackbar.LENGTH_SHORT).show();
     }
-
 
     @Override
     public void startApiWebsiteIntent() {
@@ -398,9 +438,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void onBackPressed() {
-        if (scGalleryScroll.getVisibility() == View.VISIBLE) {
+        //if (svGalleryScroll.getVisibility() == View.VISIBLE) {
+        if (mMainActivityPresenter.imagesOnScreen()) {
             mMainActivityPresenter.hideImages();
-        } else if (historyViewGroup.getVisibility() == View.VISIBLE) {
+        } else if (mMainActivityPresenter.isHistoryIsShowing()) {
             mMainActivityPresenter.hideHistory();
         } else {
             super.onBackPressed();

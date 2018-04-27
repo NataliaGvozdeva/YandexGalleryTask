@@ -33,6 +33,8 @@ public interface MainView extends BaseView {
 
     void hideImagesWithAnimation();
 
+    void showAppInfoDialog();
+
     void showProgressBar();
 
     void hideProgressBar();
@@ -60,6 +62,8 @@ public interface MainView extends BaseView {
     void hideHeader();
 
     void showEmptySearchResultMessage();
+
+    void showEmptyHistroyMessage();
 
     void showSnackbarMessage(String message);
 

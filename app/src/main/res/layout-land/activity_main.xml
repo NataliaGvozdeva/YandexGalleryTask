@@ -155,6 +155,7 @@
         android:id="@+id/sv_mainscroll"
         android:layout_below="@id/toolbar_layout"
         android:scrollbars="none"
+        android:visibility="gone"
         tools:visibility="gone">
 
         <LinearLayout
