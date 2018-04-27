@@ -13,7 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by AlexMelnikov on 17.04.18.
+ * MainView.java – main application activity view class
+ * @author Alexander Melnikov
  */
 
 @StateStrategyType(OneExecutionStateStrategy.class)
@@ -69,5 +70,5 @@ public interface MainView extends BaseView {
 
     void startApiWebsiteIntent();
 
-    void openGalleryItemPreviewDialog(ImageRequest imageRequest, int position);
+    void openGalleryItemPreviewDialogFragment(ImageRequest imageRequest, int position);
 }

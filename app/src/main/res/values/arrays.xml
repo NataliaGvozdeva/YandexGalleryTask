@@ -12,5 +12,8 @@
         <item>Sea view</item>
         <item>Desert</item>
         <item>Mountains</item>
+        <item>Desert</item>
+        <item>Ocean</item>
+        <item>London</item>
     </string-array>
 </resources>

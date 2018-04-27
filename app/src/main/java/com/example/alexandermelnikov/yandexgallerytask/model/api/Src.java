@@ -2,20 +2,16 @@ package com.example.alexandermelnikov.yandexgallerytask.model.api;
 
 import java.io.Serializable;
 
-/**
- * Created by AlexMelnikov on 24.04.18.
- */
-
 public class Src implements Serializable {
-    public String original;
-    public String large2x;
-    public String large;
-    public String medium;
-    public String small;
-    public String portrait;
-    public String square;
-    public String landscape;
-    public String tiny;
+    private String original;
+    private String large2x;
+    private String large;
+    private String medium;
+    private String small;
+    private String portrait;
+    private String square;
+    private String landscape;
+    private String tiny;
 
     public String getOriginal() {
         return original;

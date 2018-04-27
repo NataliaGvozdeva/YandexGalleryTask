@@ -16,6 +16,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
@@ -44,7 +45,6 @@ import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -54,17 +54,21 @@ import butterknife.ButterKnife;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.realm.Realm;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
-public class MainActivity extends MvpAppCompatActivity implements MainView{
+/**
+ * MainActivity.java – main application activity class
+ * @author Alexander Melnikov
+ */
+public class MainActivity extends MvpAppCompatActivity implements MainView {
+
+    private static final String TAG = "MainActivity";
 
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
     private CompositeDisposable mDisposable = new CompositeDisposable();
     private GalleryAdapter mGalleryAdapter;
     private HistoryAdapter mHistoryAdapter;
-    private GridLayoutManager mGalleryLayoutManager;
     private LinearLayoutManager mHistoryLayoutManager;
     private MaterialDialog appInfoDialog;
 
@@ -85,14 +89,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @BindView(R.id.rv_images) RecyclerView rvImages;
     @BindView(R.id.rv_history) RecyclerView rvHistory;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        //Get current orientation to understand which default number of columns to use
+        //Get current orientation to decide which default number of columns to use
         int orientation = this.getResources().getConfiguration().orientation;
         int recyclerNumberOfColumns;
         if (orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -101,7 +104,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
             recyclerNumberOfColumns = Constants.DEFAULT_LANDSCAPE_NUM_OF_COLUMNS;
         }
 
-        mGalleryLayoutManager = new GridLayoutManager(getApplicationContext(), recyclerNumberOfColumns) {
+        GridLayoutManager mGalleryLayoutManager = new GridLayoutManager(getApplicationContext(), recyclerNumberOfColumns) {
             @Override
             public boolean canScrollVertically() {
                 return false;
@@ -110,19 +113,21 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         mHistoryLayoutManager = new LinearLayoutManager(getApplicationContext());
 
         //Setup gallery RecyclerView
-        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<ImageSrc>(), mMainActivityPresenter);
+        mGalleryAdapter = new GalleryAdapter(this, new ArrayList<>(), mMainActivityPresenter);
         rvImages.setLayoutManager(mGalleryLayoutManager);
         rvImages.setAdapter(mGalleryAdapter);
 
         //Setup history RecyclerView
-        mHistoryAdapter = new HistoryAdapter(this, new ArrayList<ImageRequest>(), mMainActivityPresenter);
+        mHistoryAdapter = new HistoryAdapter(this, new ArrayList<>(), mMainActivityPresenter);
         rvHistory.setLayoutManager(mHistoryLayoutManager);
         rvHistory.setAdapter(mHistoryAdapter);
 
+        //Choose random string search object for search edit text hint and save it to presenter
         TypedArray hintObjects = getResources().obtainTypedArray(R.array.search_hint_objects);
         Random random = new Random();
         int index = random.nextInt(hintObjects.length());
         mMainActivityPresenter.setupSearchBarHint(hintObjects.getString(index));
+        hintObjects.recycle();
 
         //Prevents the soft keyboard from pushing the view above it
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -130,11 +135,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         //Setup appInfoDialog
         appInfoDialog = new MaterialDialog.Builder(this)
                 .customView(R.layout.dialog_app_info, false)
-                .positiveText(R.string.info_dialog_confirm)
+                .positiveText(android.R.string.ok)
                 .dismissListener(d -> mMainActivityPresenter.hideApplicationInfo())
                 .build();
-
-
         TextView text = appInfoDialog.getView().findViewById(R.id.tv_content);
         text.setMovementMethod(LinkMovementMethod.getInstance());
     }
@@ -184,7 +187,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
 
     @Override
     public void setupEditTextHint(String hintObject) {
-        etSearch.setHint(new StringBuilder("Search: ").append(hintObject));
+        etSearch.setHint(getString(R.string.search_hint, hintObject));
     }
 
     @Override
@@ -363,7 +366,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     @Override
     public void hideKeyboard() {
         InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-        inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        try {
+            inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "hideKeyboard: ", e);
+        }
     }
 
     @Override
@@ -382,23 +389,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     public void hideHeader() {
         YoYo.with(Techniques.SlideOutUp)
                 .duration(500)
-                .withListener(new Animator.AnimatorListener() {
+                .withListener(new AnimatorListenerAdapter() {
                     @Override
-                    public void onAnimationStart(Animator animator) {
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animator) {
+                    public void onAnimationCancel(Animator animation) {
+                        super.onAnimationCancel(animation);
                         layoutHeader.setVisibility(View.INVISIBLE);
                     }
 
                     @Override
-                    public void onAnimationCancel(Animator animator) {
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
                         layoutHeader.setVisibility(View.INVISIBLE);
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animator) {
                     }
                 })
                 .playOn(layoutHeader);
@@ -430,7 +431,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
     }
 
     @Override
-    public void openGalleryItemPreviewDialog(ImageRequest imageRequest, int position) {
+    public void openGalleryItemPreviewDialogFragment(ImageRequest imageRequest, int position) {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         SlideshowDialogFragment fragment = new SlideshowDialogFragment();
         Bundle args = new Bundle();
@@ -440,9 +441,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         fragment.show(ft, "slideshow");
     }
 
+    //Overriding onBackPressed to get more predictable user navigation experience
     @Override
     public void onBackPressed() {
-        //if (svGalleryScroll.getVisibility() == View.VISIBLE) {
         if (mMainActivityPresenter.imagesOnScreen()) {
             mMainActivityPresenter.hideImages();
         } else if (mMainActivityPresenter.isHistoryIsShowing()) {
@@ -452,37 +453,4 @@ public class MainActivity extends MvpAppCompatActivity implements MainView{
         }
     }
 
-
-    //REALM DEBUG
-    public boolean exportDatabase() {
-
-        // init realm
-        Realm realm = Realm.getDefaultInstance();
-
-        File exportRealmFile = null;
-        // get or create an "export.realm" file
-        exportRealmFile = new File(this.getExternalCacheDir(), "export.realm");
-
-        // if "export.realm" already exists, delete
-        exportRealmFile.delete();
-
-        // copy current realm to "export.realm"
-        realm.writeCopyTo(exportRealmFile);
-
-
-        realm.close();
-
-        // init email intent and add export.realm as attachment
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("plain/text");
-        intent.putExtra(Intent.EXTRA_EMAIL, "melnikov.ws@gmail.com");
-        intent.putExtra(Intent.EXTRA_SUBJECT, "My Database");
-        intent.putExtra(Intent.EXTRA_TEXT, "realm database file");
-        Uri u = Uri.fromFile(exportRealmFile);
-        intent.putExtra(Intent.EXTRA_STREAM, u);
-
-        // start email intent
-        startActivity(Intent.createChooser(intent, "title"));
-        return true;
-    }
 }

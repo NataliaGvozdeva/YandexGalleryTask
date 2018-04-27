@@ -16,11 +16,15 @@ import java.util.ArrayList;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+/**
+ * HistoryAdapter.java – adapter for history recycler view in MainActivity
+ * @author Alexander Melnikov
+ */
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder> {
 
-    Context mContext;
-    ArrayList<ImageRequest> mData;
-    OnHistoryItemClickListener listener;
+    private Context mContext;
+    private ArrayList<ImageRequest> mData;
+    private OnHistoryItemClickListener listener;
 
     public HistoryAdapter(Context mContext, ArrayList<ImageRequest> mData, OnHistoryItemClickListener listener) {
         this.mContext = mContext;
@@ -33,7 +37,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.HistoryV
         @BindView(R.id.tv_query)
         TextView tvQuery;
 
-        public HistoryViewHolder(View view) {
+        HistoryViewHolder(View view) {
             super(view);
             ButterKnife.bind(this, view);
             RxView.clicks(view)

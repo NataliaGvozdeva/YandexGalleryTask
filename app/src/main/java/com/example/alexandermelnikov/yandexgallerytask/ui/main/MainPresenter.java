@@ -15,27 +15,31 @@ import java.util.ArrayList;
 
 import javax.inject.Inject;
 
-
+/**
+ * MainPresenter.java – main application activity presenter class
+ * @author Alexander Melnikov
+ */
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.ImagesResultHandler,
         GalleryAdapter.OnGalleryItemClickListener, HistoryAdapter.OnHistoryItemClickListener {
 
     @Inject
     ImageRequestsRepository imageRequestsRepository;
-
     @Inject
     ImageSrcRepository imageSrcRepository;
 
     private String mSearchInput;
-    private String mCurrentHintObject;
-
+    private String mCurrentSearchHintObject;
     private String mLastImagesRequestPhrase;
 
     private ImageRequest mLastLoadedImageRequest;
     private ArrayList<ImageSrc> mCurrentSources;
 
+    //clearButtonBackModeOn is true when images are being showed and search edit text is empty
     private boolean clearButtonBackModeOn;
+    //infoDialogIsShowing is true when dialog with information about the app is on screen
     private boolean infoDialogIsShowing;
+    //historyIsShowing is true when history recycler view is visible on screen
     private boolean historyIsShowing;
 
     public MainPresenter() {
@@ -65,17 +69,18 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
             showApplicationInfo();
         }
 
-        getViewState().setupEditTextHint(mCurrentHintObject);
+        getViewState().setupEditTextHint(mCurrentSearchHintObject);
     }
 
     @Override
     public void detachView(MainView view) {
+        getViewState().dettachInputListeners();
         super.detachView(view);
     }
 
-    public void setupSearchBarHint(String hintObject) {
-        if (mCurrentHintObject == null) {
-            mCurrentHintObject = hintObject;
+    void setupSearchBarHint(String hintObject) {
+        if (mCurrentSearchHintObject == null) {
+            mCurrentSearchHintObject = hintObject;
         }
     }
 
@@ -87,11 +92,10 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         }
     }
 
-    public void loadImagesRequest(String phrase) {
+    void loadImagesRequest(String phrase) {
         if (historyIsShowing) {
             hideHistory();
         }
-
         mLastImagesRequestPhrase = phrase;
         if (!phrase.isEmpty()) {
             getViewState().animateSearchButton();
@@ -120,11 +124,11 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     @Override
     public void onImagesResultSuccessfulResponse(ImageRequest imageRequest, ArrayList<ImageSrc> imageSources) {
         if (!imageSources.isEmpty()) {
+            //Save previous sources emptiness state to decide whether showing images animation is needed or not
             boolean sourcesEmpty = mCurrentSources.isEmpty();
             mCurrentSources.clear();
             mCurrentSources.addAll(imageSources);
             showImages(sourcesEmpty);
-
             mLastLoadedImageRequest = imageRequest;
             insertLastRequestAndSourcesToRealm();
         } else {
@@ -140,6 +144,10 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     }
 
     public void clearButtonPressed() {
+        /*
+         * If clearButtonModeOn is true hide current showing images
+         * Clear search edit text input if it's not empty and animate clear button
+         */
         if (!clearButtonBackModeOn) {
             if (!mSearchInput.isEmpty()) {
                 mSearchInput = "";
@@ -179,7 +187,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
 
     @Override
     public void onGalleryItemClicked(int position) {
-        getViewState().openGalleryItemPreviewDialog(mLastLoadedImageRequest, position);
+        getViewState().openGalleryItemPreviewDialogFragment(mLastLoadedImageRequest, position);
     }
 
     @Override
@@ -192,7 +200,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         loadImagesRequest(requestPhrase);
     }
 
-    public void showHistoryRequest(boolean withAnimation) {
+    void showHistoryRequest(boolean withAnimation) {
         ArrayList<ImageRequest> imageRequests = imageRequestsRepository.getImageRequestsSortedByDateFromRealm();
         if (!imageRequests.isEmpty()) {
             historyIsShowing = true;
@@ -207,7 +215,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         }
     }
 
-    public void hideHistory() {
+    void hideHistory() {
         historyIsShowing = false;
         getViewState().hideHistory();
         getViewState().showBackground();
@@ -218,7 +226,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         getViewState().showAppInfoDialog();
     }
 
-    public void hideApplicationInfo() {
+    void hideApplicationInfo() {
         infoDialogIsShowing = false;
     }
 
@@ -226,17 +234,17 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         getViewState().startApiWebsiteIntent();
     }
 
-    public boolean imagesOnScreen() {
+    boolean imagesOnScreen() {
         return !mCurrentSources.isEmpty();
     }
 
-    public boolean isHistoryIsShowing() {
+    boolean isHistoryIsShowing() {
         return historyIsShowing;
     }
 
     private void insertLastRequestAndSourcesToRealm() {
         /*
-         * Check if imageRequest with the similar phrase as the last made one has been made before and already in realm
+         * Check if imageRequest with the similar phrase as the last made one has been requested before and already available in realm
          * If not then insert new request to the realm
          */
         ImageRequest similarRequestFromDb = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(mLastLoadedImageRequest.getPhrase());
@@ -245,7 +253,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
             for (ImageSrc src : mCurrentSources) {
                 imageSrcRepository.insertImageSrcToRealm(src);
             }
-            //Get managed sources from realm and set them to the ImageRequest object
+            //Get list of managed images sources from realm and set the list to the ImageRequest object
             mCurrentSources = imageSrcRepository.getImageSrcByRequestPhrase(mLastLoadedImageRequest.getPhrase());
             imageRequestsRepository.setImageSrcListForImageRequest(mLastLoadedImageRequest, mCurrentSources);
         }

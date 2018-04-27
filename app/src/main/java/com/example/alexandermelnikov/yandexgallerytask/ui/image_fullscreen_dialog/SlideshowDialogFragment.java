@@ -47,9 +47,7 @@ public class SlideshowDialogFragment extends DialogFragment {
     ImageSrcRepository imageSrcRepository;
 
     private ArrayList<ImageSrc> sources;
-    private MyViewPagerAdapter myViewPagerAdapter;
     private int selectedPosition = 0;
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,16 +63,14 @@ public class SlideshowDialogFragment extends DialogFragment {
         View v = inflater.inflate(R.layout.fragment_image_slider, container, false);
         ButterKnife.bind(this, v);
 
-       /// sources = (ArrayList<ImageSrc>) getArguments().getSerializable("sources");
         sources = imageSrcRepository.getImageSrcByRequestPhrase(getArguments().getString(REQUEST_PHRASE));
         selectedPosition = getArguments().getInt(POSITION);
 
-        myViewPagerAdapter = new MyViewPagerAdapter();
+        MyViewPagerAdapter myViewPagerAdapter = new MyViewPagerAdapter();
         viewPager.setAdapter(myViewPagerAdapter);
         viewPager.addOnPageChangeListener(viewPagerPageChangeListener);
 
         setCurrentItem(selectedPosition);
-
         return v;
     }
 
@@ -92,20 +88,17 @@ public class SlideshowDialogFragment extends DialogFragment {
 
         @Override
         public void onPageScrolled(int arg0, float arg1, int arg2) {
-
         }
 
         @Override
         public void onPageScrollStateChanged(int arg0) {
-
         }
     };
 
     private void displayMetaInfo(int position) {
-        lblCount.setText(new StringBuilder("" + (position + 1)).append(" of ").append(sources.size()).toString());
-
+        lblCount.setText(getActivity().getString(R.string.counter, position + 1, sources.size()));
         ImageSrc source = sources.get(position);
-        tvTitle.setText(new StringBuilder("Photo by: ").append(source.getPhotographer()));
+        tvTitle.setText(getActivity().getString(R.string.photographer, source.getPhotographer()));
         tvUrl.setText(source.getPexelsUrl());
         Linkify.addLinks(tvUrl, Linkify.WEB_URLS);
     }
@@ -115,10 +108,11 @@ public class SlideshowDialogFragment extends DialogFragment {
 
         private LayoutInflater layoutInflater;
 
-        public MyViewPagerAdapter() {
+        MyViewPagerAdapter() {
         }
 
         @Override
+        @NonNull
         public Object instantiateItem(@NonNull ViewGroup container, int position) {
 
             layoutInflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);

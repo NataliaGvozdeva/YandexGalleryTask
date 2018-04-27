@@ -24,9 +24,13 @@ import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/**
+ * ApiHelper.java – class for calling api requests with retrofit
+ * @author Alexander Melnikov
+ */
 public class ApiHelper {
 
-    private static final String TAG = "MyTag";
+    private static final String TAG = "ApiHelper";
 
     private Context mContext;
 
@@ -43,16 +47,21 @@ public class ApiHelper {
     }
 
     public void getImages(String phrase, final ImagesResultHandler handler) {
-        ConnectivityManager cm =
-                (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo;
+        try {
+             networkInfo = cm.getActiveNetworkInfo();
+        } catch (NullPointerException e) {
+             Log.e(TAG, "getImages: ", e);
+             networkInfo = null;
+        }
 
+        //Check if the internet connection is available and make the api request if yes
         if (networkInfo != null && networkInfo.isConnected()) {
-
             mService.getImages(Constants.API_KEY, phrase, Constants.DEFAULT_RESULTS_PER_PAGE).enqueue(new Callback<ResponseRoot>() {
+
                 @Override
                 public void onResponse(Call<ResponseRoot> call, Response<ResponseRoot> response) {
-                    Log.d(TAG, response.toString());
                     String error;
                     if (response.isSuccessful()) {
                         ImageRequest imageRequest = new ImageRequest(-1, phrase);
@@ -87,9 +96,20 @@ public class ApiHelper {
 
 
     public interface ImagesResultHandler {
+
+        /**
+         * Method is called on successful response from api
+         * @param imageRequest An ImageRequest object from api request
+         * @param imageSources A list of ImageSrc objects from api request
+         */
         void onImagesResultSuccessfulResponse(ImageRequest imageRequest, ArrayList<ImageSrc> imageSources);
 
+        /**
+         * Method is called on unsuccessful api request
+         * @param message String message describing the error
+         */
         void onImagesResultFailure(String message);
+
     }
 
 }

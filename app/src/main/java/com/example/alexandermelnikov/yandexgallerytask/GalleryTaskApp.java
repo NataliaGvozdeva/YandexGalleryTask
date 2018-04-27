@@ -25,8 +25,6 @@ public class GalleryTaskApp extends Application {
 
         Realm.init(this);
 
-        appComponent = DaggerAppComponent.builder().build();
-
         CalligraphyConfig.initDefault(new CalligraphyConfig.Builder()
                 .setDefaultFontPath(BASE_FONT)
                 .setFontAttrId(R.attr.fontPath)
@@ -39,6 +37,9 @@ public class GalleryTaskApp extends Application {
     }
 
     public static AppComponent getAppComponent() {
+        if (appComponent == null) {
+            appComponent = DaggerAppComponent.builder().build();
+        }
         return appComponent;
     }
 }

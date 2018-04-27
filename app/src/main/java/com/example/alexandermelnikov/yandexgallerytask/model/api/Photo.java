@@ -3,16 +3,12 @@ package com.example.alexandermelnikov.yandexgallerytask.model.api;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Created by AlexMelnikov on 17.04.18.
- */
-
 public class Photo implements Serializable {
     public int id;
     public int width;
     public int height;
-    public String url;
-    public String photographer;
+    private String url;
+    private String photographer;
     public Src src;
 
     public int getId() {

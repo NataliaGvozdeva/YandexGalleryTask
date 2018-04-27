@@ -2,7 +2,6 @@ package com.example.alexandermelnikov.yandexgallerytask.data;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
@@ -18,40 +17,27 @@ import io.realm.Sort;
  * ImageRequestsRepository.java – helper class for working with ImageRequest table in Realm
  * @author Alexander Melnikov
  */
-
 public class ImageRequestsRepository {
-
-    private static final String TAG = "MyTag";
 
     /**
      * Insert new ImageRequest object to realm database
      * @param request The ImageRequest realm object to be inserted
      */
     public void insertImageRequestToRealm(@NonNull ImageRequest request) {
-        Realm realm = null;
-        try {
-            realm = Realm.getDefaultInstance();
-            realm.executeTransaction(new Realm.Transaction() {
-                @Override
-                public void execute(Realm realm) {
-                    Log.d(TAG, "Insert to realm (ImageRequest)");
-                    int nextID;
-                    try {
-                        // Incrementing primary key manually
-                        nextID = realm.where(ImageRequest.class).max("id").intValue() + 1;
-                    } catch (NullPointerException e) {
-                        // If there is first item, being added to cache, give it id = 0
-                        nextID = 0;
-                    }
-                    request.setId(nextID);
-                    realm.copyToRealmOrUpdate(request);
-                }
-            });
-        } finally {
-            if (realm != null) {
-                realm.close();
+        Realm realm = Realm.getDefaultInstance();
+        realm.executeTransaction(r -> {
+            int nextID;
+            try {
+                // Incrementing primary key manually
+                nextID = realm.where(ImageRequest.class).max("id").intValue() + 1;
+            } catch (NullPointerException e) {
+                // If there is first item, being added to cache, give it id = 0
+                nextID = 0;
             }
-        }
+            request.setId(nextID);
+            realm.copyToRealmOrUpdate(request);
+        });
+        realm.close();
     }
 
     /**
@@ -61,7 +47,7 @@ public class ImageRequestsRepository {
     public ArrayList<ImageRequest> getImageRequestsSortedByDateFromRealm() {
         ArrayList<ImageRequest> requests;
         Realm realm = Realm.getDefaultInstance();
-        requests = new ArrayList<ImageRequest>(realm.where(ImageRequest.class)
+        requests = new ArrayList<>(realm.where(ImageRequest.class)
                 .sort("requestDate", Sort.DESCENDING)
                 .findAll());
         return requests;
@@ -89,28 +75,20 @@ public class ImageRequestsRepository {
      * @param sources The ArrayList or sources to be set in the imageRequest sources variable value
      */
     public void setImageSrcListForImageRequest(ImageRequest imageRequest, ArrayList<ImageSrc> sources) {
-        Realm realm = null;
-        try {
-            realm = Realm.getDefaultInstance();
-            realm.executeTransaction(new Realm.Transaction() {
-                @Override
-                public void execute(Realm realm) {
-                    RealmList<ImageSrc> _sources = new RealmList<>();
-                    _sources.addAll(sources);
-                    ImageRequest request = realm.where(ImageRequest.class)
-                            .equalTo("id", imageRequest.getId())
-                            .findFirst();
-                    if (request != null) {
-                        realm.copyToRealmOrUpdate(_sources);
-                        request.setSources(_sources);
-                    }
-                }
-            });
-        } finally {
-            if (realm != null) {
-                realm.close();
+        Realm realm = Realm.getDefaultInstance();
+        realm.executeTransaction(r -> {
+            RealmList<ImageSrc> _sources = new RealmList<>();
+            _sources.addAll(sources);
+            ImageRequest request = realm.where(ImageRequest.class)
+                    .equalTo("id", imageRequest.getId())
+                    .findFirst();
+            if (request != null) {
+                realm.copyToRealmOrUpdate(_sources);
+                request.setSources(_sources);
             }
-        }
+        });
+        realm.close();
+
     }
 
     /**
@@ -119,15 +97,12 @@ public class ImageRequestsRepository {
      */
     public void updateImageRequestDateByPhrase(String phrase) {
         Realm realm = Realm.getDefaultInstance();
-        realm.executeTransaction(new Realm.Transaction() {
-            @Override
-            public void execute(Realm realm) {
-                ImageRequest request = realm.where(ImageRequest.class)
-                        .equalTo("phrase", phrase)
-                        .findFirst();
-                if (request != null) {
-                    request.setRequestDate(new Date());
-                }
+        realm.executeTransaction(r -> {
+            ImageRequest request = realm.where(ImageRequest.class)
+                    .equalTo("phrase", phrase)
+                    .findFirst();
+            if (request != null) {
+                request.setRequestDate(new Date());
             }
         });
         realm.close();

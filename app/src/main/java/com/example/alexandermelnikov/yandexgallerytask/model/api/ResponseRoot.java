@@ -5,19 +5,16 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Created by AlexMelnikov on 17.04.18.
- */
-
 public class ResponseRoot implements Serializable {
+
     @SerializedName("total_results")
-    public int totalResults;
+    private int totalResults;
 
     @SerializedName("per_page")
-    public int perPage;
+    private int perPage;
 
-    public int page;
-    public List<Photo> photos;
+    private int page;
+    private List<Photo> photos;
 
     public int getTotalResults() {
         return totalResults;

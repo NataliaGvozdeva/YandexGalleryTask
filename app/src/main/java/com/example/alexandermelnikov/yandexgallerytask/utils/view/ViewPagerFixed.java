@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 
 /**
- * This class is used in fragment_image_slider.xml and SlideshowDialogFragment to prevent
+ * ViewPagerFixed.java – is used in fragment_image_slider.xml and SlideshowDialogFragment to prevent
  * the application from crashing because of the IllegalArgumentException which was called
  * because of the interaction problem between default viewpager and PhotoView library
  */
@@ -39,5 +39,6 @@ public class ViewPagerFixed extends ViewPager {
         }
         return false;
     }
+
 }
 

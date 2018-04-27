@@ -1,5 +1,6 @@
 package com.example.alexandermelnikov.yandexgallerytask.model.realm;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.io.Serializable;
@@ -23,7 +24,6 @@ public class ImageRequest extends RealmObject implements Serializable {
 
     private String phrase;
 
-    @Nullable
     public RealmList<ImageSrc> sources;
 
     private Date requestDate;
