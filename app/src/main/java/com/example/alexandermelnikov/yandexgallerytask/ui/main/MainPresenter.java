@@ -69,7 +69,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
             showApplicationInfo();
         }
 
-        getViewState().setupEditTextHint(mCurrentSearchHintObject);
+        getViewState().setupSearchEditTextHint(mCurrentSearchHintObject);
     }
 
     @Override

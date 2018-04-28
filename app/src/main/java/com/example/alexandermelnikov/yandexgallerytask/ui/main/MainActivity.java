@@ -186,7 +186,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     }
 
     @Override
-    public void setupEditTextHint(String hintObject) {
+    public void setupSearchEditTextHint(String hintObject) {
         etSearch.setHint(getString(R.string.search_hint, hintObject));
     }
 

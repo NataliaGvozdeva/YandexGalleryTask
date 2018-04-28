@@ -20,28 +20,69 @@ import java.util.List;
 @StateStrategyType(OneExecutionStateStrategy.class)
 public interface MainView extends BaseView {
 
-    void setupEditTextHint(String hintObject);
+    /**
+     * Set search edit text hint text velue
+     * @param hintObject String value of an example object to search
+     */
+    void setupSearchEditTextHint(String hintObject);
 
+    /**
+     * Show images recycler view with animation
+     * @param sources List of ImageSrc objects to display on recycler view
+     */
     void showImagesWithAnimation(ArrayList<ImageSrc> sources);
 
+    /**
+     * Show images recycler view without animation
+     * @param sources List of ImageSrc objects to display on recycler view
+     */
     void showImagesNoAnimation(ArrayList<ImageSrc> sources);
 
+    /**
+     * Show history recycler view without animation
+     * @param requests List of ImageRequest objects to display on recycler view
+     */
     void showHistoryNoAnimation(ArrayList<ImageRequest> requests);
 
+    /**
+     * Show history recycler view with animation
+     * @param requests List of ImageRequest objects to display on recycler view
+     */
     void showHistoryWithAnimation(ArrayList<ImageRequest> requests);
 
+    /**
+     * Hide history recycler view
+     */
     void hideHistory();
 
+    /**
+     * Hide images recycler view with animation
+     */
     void hideImagesWithAnimation();
 
+    /**
+     * Show dialog with information about the app
+     */
     void showAppInfoDialog();
 
+    /**
+     * Show loading images progress bar
+     */
     void showProgressBar();
 
+    /**
+     * Hide loading images progress bar
+     */
     void hideProgressBar();
 
+    /**
+     * Show main background ViewGroup
+     */
     void showBackground();
 
+    /**
+     * Hide main background ViewGroup
+     */
     void hideBackground();
 
     void animateSearchButton();
@@ -58,6 +99,11 @@ public interface MainView extends BaseView {
 
     void hideKeyboard();
 
+    /**
+     * Show header ViewGroup
+     * @param lastSearchObject The String of last searched object
+     * @param resultsCount Int value of all found images count
+     */
     void showHeader(String lastSearchObject, int resultsCount);
 
     void hideHeader();
@@ -70,5 +116,10 @@ public interface MainView extends BaseView {
 
     void startApiWebsiteIntent();
 
+    /**
+     * Show fullscreen image DialogFragment
+     * @param imageRequest ImageRequest object from which images will be shown
+     * @param position Position of the picked image to show firstly
+     */
     void openGalleryItemPreviewDialogFragment(ImageRequest imageRequest, int position);
 }
