@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,75 +7,95 @@
     android:id="@+id/main_layout"
     tools:context="com.example.alexandermelnikov.yandexgallerytask.ui.main.MainActivity">
 
-    <RelativeLayout
-        android:id="@+id/toolbar_layout"
-        style="@style/CustomToolbar">
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="6dp"
+        android:fitsSystemWindows="true"
+        android:theme="@style/AppTheme">
 
-        <RelativeLayout
+        <android.support.v7.widget.Toolbar
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="8dp"
-            android:background="@drawable/bg_searchbar"
-            android:focusableInTouchMode="true"
-            android:elevation="2dp">
+            android:id="@+id/toolbar"
+            android:layout_height="60dp"
+            android:elevation="6dp"
+            app:layout_collapseMode="pin"
+            app:layout_scrollFlags="scroll|snap"
+            app:popupTheme="@style/AppTheme"
+            app:contentInsetLeft="0dp"
+            app:contentInsetStart="0dp"
+            app:contentInsetRight="0dp"
+            app:contentInsetEnd="0dp">
 
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/bg_searchbar"
+                    android:focusableInTouchMode="true"
+                    android:elevation="2dp">
 
-            <ImageButton
-                android:id="@+id/btn_clear"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="10dp"
-                android:src="@drawable/ic_clear_gray_anim_to_back_28dp"
-                android:background="?selectableItemBackgroundBorderless"
-                tools:ignore="contentDescription"/>
+                    <ImageButton
+                        android:id="@+id/btn_clear"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="10dp"
+                        android:src="@drawable/ic_clear_gray_anim_to_back_28dp"
+                        android:background="?selectableItemBackgroundBorderless"
+                        tools:ignore="contentDescription"/>
 
-            <EditText
-                android:id="@+id/et_search"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_toEndOf="@+id/btn_clear"
-                android:layout_marginStart="20dp"
-                android:layout_centerVertical="true"
-                android:paddingEnd="50dp"
-                android:textSize="16sp"
-                android:background="@android:color/transparent"
-                android:imeOptions="actionSearch|flagNoExtractUi"
-                android:inputType="text"
-                tools:hint="Search: Forest" />
+                    <EditText
+                        android:id="@+id/et_search"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toEndOf="@+id/btn_clear"
+                        android:layout_marginStart="20dp"
+                        android:layout_centerVertical="true"
+                        android:paddingEnd="50dp"
+                        android:textSize="16sp"
+                        android:background="@android:color/transparent"
+                        android:imeOptions="actionSearch|flagNoExtractUi"
+                        android:inputType="text"
+                        tools:hint="Search: Forest" />
 
-            <ImageButton
-                android:id="@+id/btn_search"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_alignParentEnd="true"
-                android:layout_marginEnd="8dp"
-                android:src="@drawable/ic_search_gray_anim_30dp"
-                android:background="?selectableItemBackgroundBorderless"
-                tools:ignore="contentDescription"/>
+                    <ImageButton
+                        android:id="@+id/btn_search"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentEnd="true"
+                        android:layout_marginEnd="8dp"
+                        android:src="@drawable/ic_search_gray_anim_30dp"
+                        android:background="?selectableItemBackgroundBorderless"
+                        tools:ignore="contentDescription"/>
 
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentBottom="true"
-                android:indeterminate="true"
-                android:visibility="invisible"
-                android:layout_marginBottom="-8dp"
-                android:layout_marginTop="-4dp"/>
+                    <ProgressBar
+                        android:id="@+id/progress_bar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentBottom="true"
+                        android:indeterminate="true"
+                        android:visibility="invisible"
+                        android:layout_marginBottom="-8dp"
+                        android:layout_marginTop="-4dp"/>
 
-        </RelativeLayout>
+                </RelativeLayout>
 
-    </RelativeLayout>
+        </android.support.v7.widget.Toolbar>
+
+    </android.support.design.widget.AppBarLayout>
 
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/main_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbar_layout">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
 
         <LinearLayout
@@ -122,7 +142,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.95">
+            app:layout_constraintVertical_bias="0.82">
 
             <Button
                 android:id="@+id/btn_history"
@@ -156,12 +176,13 @@
         </LinearLayout>
 
 
-        <ScrollView
+        <android.support.v4.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/sv_mainscroll"
             android:scrollbars="none"
             android:overScrollMode="never"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
             android:visibility="gone"
             tools:visibility="gone">
 
@@ -222,7 +243,7 @@
 
             </LinearLayout>
 
-        </ScrollView>
+        </android.support.v4.widget.NestedScrollView>
 
     </android.support.constraint.ConstraintLayout>
 
@@ -230,8 +251,8 @@
         android:id="@+id/history_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolbar_layout"
         android:descendantFocusability="blocksDescendants"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
         android:visibility="gone"
         tools:visibility="gone">
 
@@ -246,4 +267,4 @@
 
     </RelativeLayout>
 
-</RelativeLayout>
+</android.support.design.widget.CoordinatorLayout>

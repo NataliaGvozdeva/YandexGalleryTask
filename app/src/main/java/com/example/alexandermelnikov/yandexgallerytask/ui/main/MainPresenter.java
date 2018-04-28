@@ -1,5 +1,6 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
+
 import android.util.Log;
 
 import com.arellomobile.mvp.InjectViewState;
@@ -26,8 +27,6 @@ import javax.inject.Inject;
 public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.ImagesResultHandler,
         GalleryAdapter.OnGalleryItemClickListener, HistoryAdapter.OnHistoryItemClickListener {
 
-    private static final String TAG = "MyTag";
-
     @Inject
     ImageRequestsRepository imageRequestsRepository;
     @Inject
@@ -37,6 +36,10 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     private String mCurrentSearchHintObject;
     private String mLastImagesRequestPhrase;
 
+    /*
+     * Curated Images are the ones displayed one the screen when option buttons are visible
+     * and no images have yet been requested by a search phrase
+     */
     private ImageRequest mSearchImagesRequest;
     private ImageRequest mCuratedImagesRequest;
     private ArrayList<ImageSrc> mCurrentShowingImagesSources;
@@ -76,7 +79,11 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         if (infoDialogIsOnScreen) {
             showApplicationInfo();
         }
-
+        /*
+         * Check if option buttons are visible on screen
+         * If yes: display no connection label if needed, or request curated images
+         * If no: show images which were requested on previous view attachment
+         */
         if (optionButtonsLayoutIsOnScreen) {
             if (noConnectionLabelIsOnScreen) {
                 getViewState().showNoConnectionMessage();
@@ -143,8 +150,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         if (!imageSources.isEmpty()) {
             mCurrentShowingImagesSources.clear();
             mCurrentShowingImagesSources.addAll(imageSources);
-            showSearchedImages(noConnectionLabelIsOnScreen);
             mSearchImagesRequest = imageRequest;
+            showSearchedImages(noConnectionLabelIsOnScreen);
             insertLastRequestAndSourcesToRealm();
         } else {
             getViewState().showEmptySearchResultMessage();
@@ -158,33 +165,28 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         getViewState().showSnackbarMessage(message);
     }
 
-    /**
-     * Get and images curated by Pexels to display them on the main screen
-     */
+    //Get and images curated by Pexels to display them on the main screen
     private void showCuratedImagesRequest() {
         /*
          * Verify if request for curated images has not yet been made
          * If it has been made previously then get curated image sources from Realm
          * Request curated images from api otherwise
          */
-        ImageRequest curatedRequestFromDb = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(Constants.CURATED_IMAGES_PHRASE);
-        if (curatedRequestFromDb == null) {
+        ImageRequest curatedImagesRequestFromDb = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(Constants.CURATED_IMAGES_PHRASE);
+        if (curatedImagesRequestFromDb == null) {
             GalleryTaskApp.getApiHelper().getCuratedImages(this);
         } else {
             mCuratedImagesSources = imageSrcRepository.getImageSrcByRequestPhrase(Constants.CURATED_IMAGES_PHRASE);
             mCuratedImagesRequest = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(Constants.CURATED_IMAGES_PHRASE);
-            Log.d(TAG, "showCuratedImagesRequest: " + mCuratedImagesSources.size());
             showCuratedImages(false);
         }
     }
-
 
     @Override
     public void onCuratedImagesResultSuccessfulResponse(ImageRequest imageRequest, ArrayList<ImageSrc> imageSources) {
         if (!imageSources.isEmpty()) {
             mCuratedImagesSources.clear();
             mCuratedImagesSources.addAll(imageSources);
-            showCuratedImages(false);
             //Save curated images request and images sources in realm
             imageRequestsRepository.insertImageRequestToRealm(imageRequest);
             for (ImageSrc src : imageSources) {
@@ -194,6 +196,8 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
             mCuratedImagesSources = imageSrcRepository.getImageSrcByRequestPhrase(imageRequest.getPhrase());
             imageRequestsRepository.setImageSrcListForImageRequest(imageRequest, mCuratedImagesSources);
             mCuratedImagesRequest = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(Constants.CURATED_IMAGES_PHRASE);
+
+            showCuratedImages(false);
         }
     }
 
@@ -218,20 +222,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         }
     }
 
-    public void showCuratedImages(boolean withAnimation) {
-        mCurrentShowingImagesSources.clear();
-        mCurrentShowingImagesSources.addAll(mCuratedImagesSources);
-        if (withAnimation) {
-            getViewState().showImagesWithAnimation(mCurrentShowingImagesSources);
-        } else {
-            getViewState().showImagesNoAnimation(mCurrentShowingImagesSources);
-        }
-        if (noConnectionLabelIsOnScreen) {
-            noConnectionLabelIsOnScreen = false;
-            getViewState().hideNoConnectionMessage();
-        }
-    }
-
     public void hideSearchedImages() {
         optionButtonsLayoutIsOnScreen = true;
         getViewState().hideHeader();
@@ -243,10 +233,28 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         getViewState().showOptionButtons();
     }
 
+    void showCuratedImages(boolean withAnimation) {
+        if (!mCuratedImagesSources.isEmpty()) {
+            mCurrentShowingImagesSources.clear();
+            mCurrentShowingImagesSources.addAll(mCuratedImagesSources);
+            if (withAnimation) {
+                getViewState().showImagesWithAnimation(mCurrentShowingImagesSources);
+            } else {
+                getViewState().showImagesNoAnimation(mCurrentShowingImagesSources);
+            }
+        } else {
+            showCuratedImagesRequest();
+        }
+        if (noConnectionLabelIsOnScreen) {
+            noConnectionLabelIsOnScreen = false;
+            getViewState().hideNoConnectionMessage();
+        }
+    }
+
     public void clearButtonPressed() {
         /*
          * If clearButtonModeOn is true hide current showing images
-         * Clear search edit text input if it's not empty and animate clear button
+         * Clear search edit text input if it's not, empty input and animate clear button
          */
         if (!clearButtonBackModeOn) {
             if (!mSearchInput.isEmpty()) {
@@ -266,6 +274,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
 
     @Override
     public void onGalleryItemClicked(int position) {
+        //If option buttons are on screen, it means we want to pass curated images to the dialog fragment (not search requested)
         if (optionButtonsLayoutIsOnScreen) {
             getViewState().openGalleryItemPreviewDialogFragment(mCuratedImagesRequest, position);
         } else {
@@ -302,7 +311,6 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     }
 
     void hideHistory() {
-        Log.d(TAG, "hideHistory: ");
         historyIsOnScreen = false;
         getViewState().hideHistory();
         optionButtonsLayoutIsOnScreen = true;

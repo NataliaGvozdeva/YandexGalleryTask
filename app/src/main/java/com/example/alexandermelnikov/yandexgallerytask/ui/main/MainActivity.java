@@ -8,13 +8,17 @@ import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.net.Uri;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -65,8 +69,8 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
  */
 public class MainActivity extends MvpAppCompatActivity implements MainView {
 
-    private static final String TAG = "MyTag";
-
+    private static final String TAG = "MainActivity";
+    
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
     private CompositeDisposable mDisposable = new CompositeDisposable();
@@ -76,6 +80,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     private MaterialDialog appInfoDialog;
 
     private float initButtonsViewGroupY;
+    private float maxAnimationHeight;
 
     @BindView(R.id.progress_bar) ProgressBar progressBar;
     @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
@@ -86,15 +91,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     @BindView(R.id.tv_search_header) TextView tvHeaderText;
     @BindView(R.id.tv_results_counter) TextView tvResultsCounter;
     @BindView(R.id.et_search) EditText etSearch;
-    @BindView(R.id.toolbar_layout) RelativeLayout toolbarLayout;
     @BindView(R.id.history_container) RelativeLayout historyViewGroup;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
     @BindView(R.id.gallery_container) RelativeLayout layoutGalleryViewGroup;
     @BindView(R.id.button_container) LinearLayout buttonsViewGroup;
     @BindView(R.id.lbl_no_connection) LinearLayout lblNoConnection;
-    @BindView(R.id.sv_mainscroll) ScrollView svGalleryScroll;
+    @BindView(R.id.sv_mainscroll) NestedScrollView svGalleryScroll;
     @BindView(R.id.rv_images) RecyclerView rvImages;
     @BindView(R.id.rv_history) RecyclerView rvHistory;
+    @BindView(R.id.appbar) AppBarLayout myAppBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,7 +153,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         TextView text = appInfoDialog.getView().findViewById(R.id.tv_content);
         text.setMovementMethod(LinkMovementMethod.getInstance());
 
-        buttonsViewGroup.post(() -> initButtonsViewGroupY = buttonsViewGroup.getY());
+        //Setup values for buttonsViewGroup animation
+        buttonsViewGroup.post(() -> {
+            initButtonsViewGroupY = buttonsViewGroup.getY();
+            maxAnimationHeight = buttonsViewGroup.getHeight() * 1.6f;
+        });
     }
 
     @Override
@@ -179,8 +188,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         Disposable logoClick = RxView.clicks(ivApiLogo)
                 .subscribe(o -> mMainActivityPresenter.apiLogoPressed());
 
-        btnSearch.setOnLongClickListener(v -> exportDatabase());
-
         etSearch.setOnEditorActionListener(((textView, i, keyEvent) -> {
             if (i == EditorInfo.IME_ACTION_SEARCH) {
                 mMainActivityPresenter.showImagesRequest(etSearch.getText().toString());
@@ -188,15 +195,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
             return false;
         }));
 
-        svGalleryScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
-            float newY = initButtonsViewGroupY + svGalleryScroll.getScrollY();
-            if (newY >= initButtonsViewGroupY && newY != 0) {
+        //Setup Y animation for buttonViewGroup on changed offset of the AppBarLayout
+        myAppBar.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            float fraction = ((float) Math.abs(verticalOffset)) / appBarLayout.getTotalScrollRange();
+            float newY = initButtonsViewGroupY + maxAnimationHeight * fraction;
+            if (newY >= initButtonsViewGroupY && newY > appBarLayout.getTotalScrollRange()) {
                 buttonsViewGroup.setY(newY);
             }
         });
 
         mDisposable.addAll(clearButton, searchButton, searchInputChanges, historyButton, infoButton, logoClick);
-
     }
 
     @Override
@@ -375,7 +383,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
                 .setDuration(300);
     }
 
-
     @Override
     public void animateSearchButton() {
         AnimatedVectorDrawable drawable = (AnimatedVectorDrawable) getResources()
@@ -484,37 +491,4 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         }
     }
 
-
-    //DEBUG REALM
-    private boolean exportDatabase() {
-
-        // init realm
-        Realm realm = Realm.getDefaultInstance();
-
-        File exportRealmFile = null;
-        // get or create an "export.realm" file
-        exportRealmFile = new File(this.getExternalCacheDir(), "export.realm");
-
-        // if "export.realm" already exists, delete
-        exportRealmFile.delete();
-
-        // copy current realm to "export.realm"
-        realm.writeCopyTo(exportRealmFile);
-
-
-        realm.close();
-
-        // init email intent and add export.realm as attachment
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("plain/text");
-        intent.putExtra(Intent.EXTRA_EMAIL, "melnikov.ws@gmail.com");
-        intent.putExtra(Intent.EXTRA_SUBJECT, "My Database");
-        intent.putExtra(Intent.EXTRA_TEXT, "realm database file");
-        Uri u = Uri.fromFile(exportRealmFile);
-        intent.putExtra(Intent.EXTRA_STREAM, u);
-
-        // start email intent
-        startActivity(Intent.createChooser(intent, "title"));
-        return true;
-    }
 }

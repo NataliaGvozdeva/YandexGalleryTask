@@ -31,7 +31,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class ApiHelper {
 
-    private static final String TAG = "MyTag";
+    private static final String TAG = "ApiHelper";
 
     private Context mContext;
 
