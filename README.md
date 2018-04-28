@@ -21,9 +21,7 @@
 > * тестам.
 
 ## Скриншоты
-![Screenshot](https://raw.githubusercontent.com/millerovv/YandexGalleryTask/master/docs/Screenshot_1.png)
-![Screenshot](https://raw.githubusercontent.com/millerovv/YandexGalleryTask/master/docs/Screenshot_2.png)
-![Screenshot](https://raw.githubusercontent.com/millerovv/YandexGalleryTask/master/docs/Screenshot_3.png)
+<img src="../master/docs/Screenshot_1.png" width="250"> <img src="../master/docs/Screenshot_2.png" width="250"> <img src="../master/docs/Screenshot_3.png" width="250">
 
 ## Сборка проекта
 Чтобы собрать проект, нужно получить [API-ключ Pexels]((https://www.pexels.com/api/)) и записать его в ```gradle.properties``` проекта, как переменную ```PexelsApiKey```.
