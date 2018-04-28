@@ -8,7 +8,6 @@ import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.net.Uri;
-import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
@@ -18,6 +17,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -25,6 +25,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -45,6 +46,7 @@ import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +56,7 @@ import butterknife.ButterKnife;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.realm.Realm;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 /**
@@ -62,7 +65,7 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
  */
 public class MainActivity extends MvpAppCompatActivity implements MainView {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MyTag";
 
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
@@ -71,6 +74,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     private HistoryAdapter mHistoryAdapter;
     private LinearLayoutManager mHistoryLayoutManager;
     private MaterialDialog appInfoDialog;
+
+    private float initButtonsViewGroupY;
 
     @BindView(R.id.progress_bar) ProgressBar progressBar;
     @BindView(R.id.iv_api_icon) ImageView ivApiLogo;
@@ -81,10 +86,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     @BindView(R.id.tv_search_header) TextView tvHeaderText;
     @BindView(R.id.tv_results_counter) TextView tvResultsCounter;
     @BindView(R.id.et_search) EditText etSearch;
-    @BindView(R.id.main_background) ConstraintLayout layoutBackground;
+    @BindView(R.id.toolbar_layout) RelativeLayout toolbarLayout;
     @BindView(R.id.history_container) RelativeLayout historyViewGroup;
     @BindView(R.id.layout_header) RelativeLayout layoutHeader;
     @BindView(R.id.gallery_container) RelativeLayout layoutGalleryViewGroup;
+    @BindView(R.id.button_container) LinearLayout buttonsViewGroup;
+    @BindView(R.id.lbl_no_connection) LinearLayout lblNoConnection;
     @BindView(R.id.sv_mainscroll) ScrollView svGalleryScroll;
     @BindView(R.id.rv_images) RecyclerView rvImages;
     @BindView(R.id.rv_history) RecyclerView rvHistory;
@@ -140,6 +147,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
                 .build();
         TextView text = appInfoDialog.getView().findViewById(R.id.tv_content);
         text.setMovementMethod(LinkMovementMethod.getInstance());
+
+        buttonsViewGroup.post(() -> initButtonsViewGroupY = buttonsViewGroup.getY());
     }
 
     @Override
@@ -151,7 +160,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     public void attachInputListeners() {
 
         Disposable searchButton = RxView.clicks(btnSearch)
-                .subscribe(o -> mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString()));
+                .subscribe(o -> mMainActivityPresenter.showImagesRequest(etSearch.getText().toString()));
 
         Disposable clearButton = RxView.clicks(btnClear)
                 .subscribe(o -> mMainActivityPresenter.clearButtonPressed());
@@ -170,14 +179,24 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
         Disposable logoClick = RxView.clicks(ivApiLogo)
                 .subscribe(o -> mMainActivityPresenter.apiLogoPressed());
 
+        btnSearch.setOnLongClickListener(v -> exportDatabase());
+
         etSearch.setOnEditorActionListener(((textView, i, keyEvent) -> {
             if (i == EditorInfo.IME_ACTION_SEARCH) {
-                mMainActivityPresenter.loadImagesRequest(etSearch.getText().toString());
+                mMainActivityPresenter.showImagesRequest(etSearch.getText().toString());
             }
             return false;
         }));
 
+        svGalleryScroll.getViewTreeObserver().addOnScrollChangedListener(() -> {
+            float newY = initButtonsViewGroupY + svGalleryScroll.getScrollY();
+            if (newY >= initButtonsViewGroupY && newY != 0) {
+                buttonsViewGroup.setY(newY);
+            }
+        });
+
         mDisposable.addAll(clearButton, searchButton, searchInputChanges, historyButton, infoButton, logoClick);
+
     }
 
     @Override
@@ -211,6 +230,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     public void showImagesNoAnimation(ArrayList<ImageSrc> sources) {
         svGalleryScroll.setVisibility(View.VISIBLE);
         mGalleryAdapter.replaceData(sources);
+        svGalleryScroll.fullScroll(View.FOCUS_UP);
     }
 
     @Override
@@ -298,33 +318,63 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     }
 
     @Override
-    public void showBackground() {
-        layoutBackground.setVisibility(View.VISIBLE);
-        layoutBackground.animate()
+    public void showNoConnectionMessage() {
+        lblNoConnection.setVisibility(View.VISIBLE);
+        lblNoConnection.animate()
                 .alpha(1.0f)
                 .setListener(new AnimatorListenerAdapter() {})
                 .setDuration(300);
     }
 
     @Override
-    public void hideBackground() {
-        layoutBackground.animate()
+    public void hideNoConnectionMessage() {
+        lblNoConnection.animate()
                 .alpha(0.0f)
                 .setListener(new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationCancel(Animator animation) {
                         super.onAnimationCancel(animation);
-                        layoutBackground.setVisibility(View.GONE);
+                        lblNoConnection.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         super.onAnimationEnd(animation);
-                        layoutBackground.setVisibility(View.GONE);
+                        lblNoConnection.setVisibility(View.GONE);
                     }
                 })
                 .setDuration(300);
     }
+
+    @Override
+    public void showOptionButtons() {
+        buttonsViewGroup.setVisibility(View.VISIBLE);
+        buttonsViewGroup.animate()
+                .alpha(1.0f)
+                .setListener(new AnimatorListenerAdapter() {})
+                .setDuration(300);
+    }
+
+    @Override
+    public void hideOptionButtons() {
+        buttonsViewGroup.animate()
+                .alpha(0.0f)
+                .setListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        super.onAnimationCancel(animation);
+                        buttonsViewGroup.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+                        buttonsViewGroup.setVisibility(View.GONE);
+                    }
+                })
+                .setDuration(300);
+    }
+
 
     @Override
     public void animateSearchButton() {
@@ -375,34 +425,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
 
     @Override
     public void showHeader(String lastSearchObject, int resultsCount) {
-        if (layoutHeader.getVisibility() == View.INVISIBLE) {
-            layoutHeader.setVisibility(View.VISIBLE);
-            YoYo.with(Techniques.SlideInDown)
-                .duration(500)
-                .playOn(layoutHeader);
-        }
+        layoutHeader.setVisibility(View.VISIBLE);
         tvHeaderText.setText(getString(R.string.search_results, lastSearchObject));
         tvResultsCounter.setText(getString(R.string.results_count, resultsCount));
     }
 
     @Override
     public void hideHeader() {
-        YoYo.with(Techniques.SlideOutUp)
-                .duration(500)
-                .withListener(new AnimatorListenerAdapter() {
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                        super.onAnimationCancel(animation);
-                        layoutHeader.setVisibility(View.INVISIBLE);
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        super.onAnimationEnd(animation);
-                        layoutHeader.setVisibility(View.INVISIBLE);
-                    }
-                })
-                .playOn(layoutHeader);
+        layoutHeader.setVisibility(View.GONE);
     }
 
     @Override
@@ -444,13 +474,47 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     //Overriding onBackPressed to get more predictable user navigation experience
     @Override
     public void onBackPressed() {
-        if (mMainActivityPresenter.imagesOnScreen()) {
-            mMainActivityPresenter.hideImages();
-        } else if (mMainActivityPresenter.isHistoryIsShowing()) {
+        if (mMainActivityPresenter.imagesOnScreen() && !mMainActivityPresenter.isHistoryIsOnScreen()) {
+            mMainActivityPresenter.hideSearchedImages();
+        } else if (mMainActivityPresenter.isHistoryIsOnScreen()) {
             mMainActivityPresenter.hideHistory();
+            mMainActivityPresenter.showCuratedImages(true);
         } else {
             super.onBackPressed();
         }
     }
 
+
+    //DEBUG REALM
+    private boolean exportDatabase() {
+
+        // init realm
+        Realm realm = Realm.getDefaultInstance();
+
+        File exportRealmFile = null;
+        // get or create an "export.realm" file
+        exportRealmFile = new File(this.getExternalCacheDir(), "export.realm");
+
+        // if "export.realm" already exists, delete
+        exportRealmFile.delete();
+
+        // copy current realm to "export.realm"
+        realm.writeCopyTo(exportRealmFile);
+
+
+        realm.close();
+
+        // init email intent and add export.realm as attachment
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("plain/text");
+        intent.putExtra(Intent.EXTRA_EMAIL, "melnikov.ws@gmail.com");
+        intent.putExtra(Intent.EXTRA_SUBJECT, "My Database");
+        intent.putExtra(Intent.EXTRA_TEXT, "realm database file");
+        Uri u = Uri.fromFile(exportRealmFile);
+        intent.putExtra(Intent.EXTRA_STREAM, u);
+
+        // start email intent
+        startActivity(Intent.createChooser(intent, "title"));
+        return true;
+    }
 }

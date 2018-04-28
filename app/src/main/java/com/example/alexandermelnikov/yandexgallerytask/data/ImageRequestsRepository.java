@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
+import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,7 +42,7 @@ public class ImageRequestsRepository {
     }
 
     /**
-     * Get all ImageRequest objects from Realm sorted by date
+     * Get all ImageRequest objects from Realm sorted by date except for the curated images request
      * @return An ArrayList of ImageRequest objects
      */
     public ArrayList<ImageRequest> getImageRequestsSortedByDateFromRealm() {
@@ -49,6 +50,7 @@ public class ImageRequestsRepository {
         Realm realm = Realm.getDefaultInstance();
         requests = new ArrayList<>(realm.where(ImageRequest.class)
                 .sort("requestDate", Sort.DESCENDING)
+                .notEqualTo("phrase", Constants.CURATED_IMAGES_PHRASE)
                 .findAll());
         return requests;
     }

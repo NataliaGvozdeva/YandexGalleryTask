@@ -15,4 +15,7 @@ public class Constants {
     public static final int DEFAULT_LANDSCAPE_NUM_OF_COLUMNS = 6;
     public static final String PEXELS_API_SITE_URL = "https://www.pexels.com/api/";
 
+    //Realm Constants
+    public static final String CURATED_IMAGES_PHRASE = "9qVatuSVAj4NRvjQWxKo";
+
 }

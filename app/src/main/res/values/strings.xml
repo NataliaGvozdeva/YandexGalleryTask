@@ -12,6 +12,10 @@
     <string name="empty_search_result">The search has not given any results</string>
     <string name="empty_history">The history is empty</string>
     <string name="start_searching_now">Start searching photos now</string>
+    <string name="no_connection">
+        Couldn\'t connect to the server
+        \nPlease check your internet connection and try again
+    </string>
     <string name="info_dialog_content">
         World Photos gives you the opportunity to find high quality photos by a search phrase.
         \n\nImages are provided by <a href="https://www.pexels.com/api/">Pexels API</a>.

@@ -75,15 +75,13 @@ public interface MainView extends BaseView {
      */
     void hideProgressBar();
 
-    /**
-     * Show main background ViewGroup
-     */
-    void showBackground();
+    void showNoConnectionMessage();
 
-    /**
-     * Hide main background ViewGroup
-     */
-    void hideBackground();
+    void hideNoConnectionMessage();
+
+    void showOptionButtons();
+
+    void hideOptionButtons();
 
     void animateSearchButton();
 

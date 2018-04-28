@@ -17,4 +17,8 @@ public interface ApiService {
    Call<ResponseRoot> getImages(@Header("Authorization") String apiKey,
                                 @Query("query") String phrase,
                                 @Query("per_page") int numberOfResultsPerPage);
+
+   @GET("curated")
+   Call<ResponseRoot> getCuratedImages(@Header("Authorization") String apiKey,
+                                       @Query("per_page") int numberOfResultsPerPage);
 }

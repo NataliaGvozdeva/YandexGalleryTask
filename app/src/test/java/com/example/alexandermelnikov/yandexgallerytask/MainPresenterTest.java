@@ -1,9 +1,5 @@
 package com.example.alexandermelnikov.yandexgallerytask;
 
-import android.content.Context;
-
-import com.example.alexandermelnikov.yandexgallerytask.data.ImageRequestsRepository;
-import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
 import com.example.alexandermelnikov.yandexgallerytask.ui.main.MainPresenter;
 import com.example.alexandermelnikov.yandexgallerytask.ui.main.MainView;
 
@@ -13,13 +9,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import io.realm.Realm;
-import io.realm.RealmConfiguration;
-import io.realm.internal.RealmCore;
-import io.realm.log.RealmLog;
-
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -64,7 +54,7 @@ public class MainPresenterTest {
 
     @Test
     public void shouldHideImagesHideHeaderAndShowBackground() throws Exception {
-        presenter.hideImages();
+        presenter.hideSearchedImages();
         verify(view).hideImagesWithAnimation();
         verify(view).hideHeader();
         verify(view).showBackground();
