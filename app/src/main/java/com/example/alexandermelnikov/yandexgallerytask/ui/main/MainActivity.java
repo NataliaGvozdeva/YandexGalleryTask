@@ -8,7 +8,6 @@ import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.net.Uri;
-import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentTransaction;
@@ -18,10 +17,8 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.method.LinkMovementMethod;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -32,7 +29,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -41,8 +37,8 @@ import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.example.alexandermelnikov.yandexgallerytask.R;
-import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
-import com.example.alexandermelnikov.yandexgallerytask.adapter.HistoryAdapter;
+import com.example.alexandermelnikov.yandexgallerytask.ui.adapter.GalleryAdapter;
+import com.example.alexandermelnikov.yandexgallerytask.ui.adapter.HistoryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageRequest;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 import com.example.alexandermelnikov.yandexgallerytask.ui.image_fullscreen_dialog.SlideshowDialogFragment;
@@ -50,7 +46,6 @@ import com.example.alexandermelnikov.yandexgallerytask.utils.Constants;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -60,7 +55,6 @@ import butterknife.ButterKnife;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.realm.Realm;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 /**
@@ -485,7 +479,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
             mMainActivityPresenter.hideSearchedImages();
         } else if (mMainActivityPresenter.isHistoryIsOnScreen()) {
             mMainActivityPresenter.hideHistory();
-            mMainActivityPresenter.showCuratedImages(true);
         } else {
             super.onBackPressed();
         }

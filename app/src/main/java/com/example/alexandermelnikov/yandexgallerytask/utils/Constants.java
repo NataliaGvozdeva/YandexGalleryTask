@@ -6,7 +6,6 @@ package com.example.alexandermelnikov.yandexgallerytask.utils;
 
 public class Constants {
     //Api Constants
-    public static final String API_KEY = "563492ad6f9170000100000104fad2610a8044a7af78dd4178889712";
     public static final String API_BASE_URL = "https://api.pexels.com/v1/";
     public static final int DEFAULT_RESULTS_PER_PAGE = 36;
 

@@ -1,13 +1,11 @@
 package com.example.alexandermelnikov.yandexgallerytask.ui.main;
 
 
-import android.util.Log;
-
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
-import com.example.alexandermelnikov.yandexgallerytask.adapter.GalleryAdapter;
-import com.example.alexandermelnikov.yandexgallerytask.adapter.HistoryAdapter;
+import com.example.alexandermelnikov.yandexgallerytask.ui.adapter.GalleryAdapter;
+import com.example.alexandermelnikov.yandexgallerytask.ui.adapter.HistoryAdapter;
 import com.example.alexandermelnikov.yandexgallerytask.api.ApiHelper;
 import com.example.alexandermelnikov.yandexgallerytask.data.ImageRequestsRepository;
 import com.example.alexandermelnikov.yandexgallerytask.data.ImageSrcRepository;
@@ -315,6 +313,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         getViewState().hideHistory();
         optionButtonsLayoutIsOnScreen = true;
         getViewState().showOptionButtons();
+        showCuratedImages(true);
     }
 
     public void showApplicationInfo() {

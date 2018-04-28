@@ -3,9 +3,11 @@ package com.example.alexandermelnikov.yandexgallerytask.api;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.example.alexandermelnikov.yandexgallerytask.BuildConfig;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
 import com.example.alexandermelnikov.yandexgallerytask.model.api.ResponseRoot;
@@ -32,6 +34,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiHelper {
 
     private static final String TAG = "ApiHelper";
+    private static final String API_KEY = BuildConfig.API_KEY;
 
     private Context mContext;
 
@@ -55,7 +58,7 @@ public class ApiHelper {
     public void getImages(String phrase, final ImagesResultHandler handler) {
         //Check if the internet connection is available and make the api request if yes
         if (internetConnectionAvailible()) {
-            mService.getImages(Constants.API_KEY, phrase, Constants.DEFAULT_RESULTS_PER_PAGE).enqueue(new Callback<ResponseRoot>() {
+            mService.getImages(API_KEY, phrase, Constants.DEFAULT_RESULTS_PER_PAGE).enqueue(new Callback<ResponseRoot>() {
 
                 @Override
                 public void onResponse(@NonNull Call<ResponseRoot> call, @NonNull Response<ResponseRoot> response) {
@@ -97,7 +100,7 @@ public class ApiHelper {
      */
     public void getCuratedImages(final ImagesResultHandler handler) {
         if (internetConnectionAvailible()) {
-            mService.getCuratedImages(Constants.API_KEY, Constants.DEFAULT_RESULTS_PER_PAGE).enqueue(new Callback<ResponseRoot>() {
+            mService.getCuratedImages(API_KEY, Constants.DEFAULT_RESULTS_PER_PAGE).enqueue(new Callback<ResponseRoot>() {
 
                 @Override
                 public void onResponse(@NonNull Call<ResponseRoot> call, @NonNull Response<ResponseRoot> response) {
