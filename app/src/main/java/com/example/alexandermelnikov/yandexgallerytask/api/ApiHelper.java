@@ -28,7 +28,7 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * ApiHelper.java – class for calling api requests with retrofit
+ * ApiHelper.java – class for calling api requests using retrofit
  * @author Alexander Melnikov
  */
 public class ApiHelper {

@@ -35,7 +35,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     private String mLastImagesRequestPhrase;
 
     /*
-     * Curated Images are the ones displayed one the screen when option buttons are visible
+     * Curated Images are the ones displayed on the screen when option buttons are visible
      * and no images have yet been requested by a search phrase
      */
     private ImageRequest mSearchImagesRequest;
@@ -52,7 +52,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     //historyIsOnScreen is true when history recycler view is visible on screen
     private boolean historyIsOnScreen;
 
-    public MainPresenter() {
+    MainPresenter() {
         GalleryTaskApp.getAppComponent().inject(this);
         mSearchInput = "";
         mCurrentShowingImagesSources = new ArrayList<>();
@@ -63,6 +63,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         noConnectionLabelIsOnScreen = false;
         optionButtonsLayoutIsOnScreen = true;
     }
+
 
     @Override
     public void attachView(MainView view) {
@@ -107,7 +108,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         }
     }
 
-    public void searchInputChanges(String input) {
+    void searchInputChanges(String input) {
         mSearchInput = input;
         if (!input.isEmpty() && clearButtonBackModeOn) {
             getViewState().animateBackButtonToClear();
@@ -136,7 +137,9 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
                 mCurrentShowingImagesSources = imageSrcRepository.getImageSrcByRequestPhrase(phrase);
                 showSearchedImages(noConnectionLabelIsOnScreen);
                 mSearchImagesRequest = imageRequestsRepository.getImageRequestByRequestPhraseFromRealm(phrase);
-                imageRequestsRepository.updateImageRequestDateByPhrase(mSearchImagesRequest.getPhrase());
+                if (mSearchImagesRequest != null) {
+                    imageRequestsRepository.updateImageRequestDateByPhrase(mSearchImagesRequest.getPhrase());
+                }
             }
         } else {
             getViewState().animateEmptySearchBar();
@@ -220,7 +223,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         }
     }
 
-    public void hideSearchedImages() {
+    void hideSearchedImages() {
         optionButtonsLayoutIsOnScreen = true;
         getViewState().hideHeader();
         if (clearButtonBackModeOn) {
@@ -231,7 +234,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         getViewState().showOptionButtons();
     }
 
-    void showCuratedImages(boolean withAnimation) {
+    private void showCuratedImages(boolean withAnimation) {
         if (!mCuratedImagesSources.isEmpty()) {
             mCurrentShowingImagesSources.clear();
             mCurrentShowingImagesSources.addAll(mCuratedImagesSources);
@@ -249,7 +252,7 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         }
     }
 
-    public void clearButtonPressed() {
+    void clearButtonPressed() {
         /*
          * If clearButtonModeOn is true hide current showing images
          * Clear search edit text input if it's not, empty input and animate clear button
@@ -272,11 +275,13 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
 
     @Override
     public void onGalleryItemClicked(int position) {
-        //If option buttons are on screen, it means we want to pass curated images to the dialog fragment (not search requested)
-        if (optionButtonsLayoutIsOnScreen) {
-            getViewState().openGalleryItemPreviewDialogFragment(mCuratedImagesRequest, position);
-        } else {
-            getViewState().openGalleryItemPreviewDialogFragment(mSearchImagesRequest, position);
+        if (!historyIsOnScreen && !infoDialogIsOnScreen) {
+            //If option buttons are on screen, it means we want to pass curated images to the dialog fragment (not search requested)
+            if (optionButtonsLayoutIsOnScreen) {
+                getViewState().openGalleryItemPreviewDialogFragment(mCuratedImagesRequest, position);
+            } else {
+                getViewState().openGalleryItemPreviewDialogFragment(mSearchImagesRequest, position);
+            }
         }
     }
 
@@ -292,19 +297,21 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
     }
 
     void showHistoryRequest(boolean withAnimation) {
-        ArrayList<ImageRequest> imageRequests = imageRequestsRepository.getImageRequestsSortedByDateFromRealm();
-        if (!imageRequests.isEmpty()) {
-            historyIsOnScreen = true;
-            if (withAnimation) {
-                getViewState().showHistoryWithAnimation(imageRequests);
+        if (!infoDialogIsOnScreen) {
+            ArrayList<ImageRequest> imageRequests = imageRequestsRepository.getImageRequestsSortedByDateFromRealm();
+            if (!imageRequests.isEmpty()) {
+                historyIsOnScreen = true;
+                if (withAnimation) {
+                    getViewState().showHistoryWithAnimation(imageRequests);
+                } else {
+                    getViewState().showHistoryNoAnimation(imageRequests);
+                }
+                optionButtonsLayoutIsOnScreen = false;
+                getViewState().hideImagesWithAnimation();
+                getViewState().hideOptionButtons();
             } else {
-                getViewState().showHistoryNoAnimation(imageRequests);
+                getViewState().showEmptyHistroyMessage();
             }
-            optionButtonsLayoutIsOnScreen = false;
-            getViewState().hideImagesWithAnimation();
-            getViewState().hideOptionButtons();
-        } else {
-            getViewState().showEmptyHistroyMessage();
         }
     }
 
@@ -316,16 +323,18 @@ public class MainPresenter extends MvpPresenter<MainView> implements ApiHelper.I
         showCuratedImages(true);
     }
 
-    public void showApplicationInfo() {
-        infoDialogIsOnScreen = true;
-        getViewState().showAppInfoDialog();
+    void showApplicationInfo() {
+        if (!historyIsOnScreen) {
+            infoDialogIsOnScreen = true;
+            getViewState().showAppInfoDialog();
+        }
     }
 
     void hideApplicationInfo() {
         infoDialogIsOnScreen = false;
     }
 
-    public void apiLogoPressed() {
+    void apiLogoPressed() {
         getViewState().startApiWebsiteIntent();
     }
 

@@ -137,7 +137,7 @@
             android:elevation="3dp"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            app:layout_constraintDimensionRatio="1.5:1"
+            app:layout_constraintDimensionRatio="1.6:1"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

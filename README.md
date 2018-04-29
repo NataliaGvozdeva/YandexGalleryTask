@@ -25,9 +25,6 @@
 ![Screenshot](https://raw.githubusercontent.com/millerovv/YandexGalleryTask/master/docs/Screenshot_2.png)
 ![Screenshot](https://raw.githubusercontent.com/millerovv/YandexGalleryTask/master/docs/Screenshot_3.png)
 
-## Сборка проекта
-Чтобы собрать проект, нужно получить [API-ключ Pexels]((https://www.pexels.com/api/)) и записать его в ```gradle.properties``` проекта, как переменную ```PexelsApiKey```.
-
 ## Используемые библиотеки
 * [Moxy](https://github.com/Arello-Mobile/Moxy)
 * [Glide](https://github.com/bumptech/glide)

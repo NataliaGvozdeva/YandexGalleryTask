@@ -64,7 +64,7 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 public class MainActivity extends MvpAppCompatActivity implements MainView {
 
     private static final String TAG = "MainActivity";
-    
+
     @InjectPresenter MainPresenter mMainActivityPresenter;
 
     private CompositeDisposable mDisposable = new CompositeDisposable();
@@ -72,6 +72,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
     private HistoryAdapter mHistoryAdapter;
     private LinearLayoutManager mHistoryLayoutManager;
     private MaterialDialog appInfoDialog;
+    private SlideshowDialogFragment mFullScreenImageDialogFragment;
 
     private float initButtonsViewGroupY;
     private float maxAnimationHeight;
@@ -463,13 +464,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainView {
 
     @Override
     public void openGalleryItemPreviewDialogFragment(ImageRequest imageRequest, int position) {
-        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-        SlideshowDialogFragment fragment = new SlideshowDialogFragment();
-        Bundle args = new Bundle();
-        args.putSerializable(fragment.REQUEST_PHRASE, imageRequest.getPhrase());
-        args.putInt(fragment.POSITION, position);
-        fragment.setArguments(args);
-        fragment.show(ft, "slideshow");
+        //Prevent multiple instances of the dialog fragment showing on the screen at the same time
+        if (mFullScreenImageDialogFragment == null || !mFullScreenImageDialogFragment.isOnScreen()) {
+            FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+            mFullScreenImageDialogFragment = new SlideshowDialogFragment();
+            Bundle args = new Bundle();
+            args.putSerializable(mFullScreenImageDialogFragment.REQUEST_PHRASE, imageRequest.getPhrase());
+            args.putInt(mFullScreenImageDialogFragment.POSITION, position);
+            mFullScreenImageDialogFragment.setArguments(args);
+            mFullScreenImageDialogFragment.show(ft, "slideshow");
+        }
     }
 
     //Overriding onBackPressed to get more predictable user navigation experience

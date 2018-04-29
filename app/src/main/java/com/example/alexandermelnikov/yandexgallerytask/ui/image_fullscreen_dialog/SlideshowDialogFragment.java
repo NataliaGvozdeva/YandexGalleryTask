@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.util.Linkify;
@@ -17,7 +18,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.alexandermelnikov.yandexgallerytask.GalleryTaskApp;
 import com.example.alexandermelnikov.yandexgallerytask.R;
 import com.example.alexandermelnikov.yandexgallerytask.data.ImageSrcRepository;
-import com.example.alexandermelnikov.yandexgallerytask.model.api.Photo;
 import com.example.alexandermelnikov.yandexgallerytask.model.realm.ImageSrc;
 import com.github.chrisbanes.photoview.PhotoView;
 
@@ -48,6 +48,7 @@ public class SlideshowDialogFragment extends DialogFragment {
 
     private ArrayList<ImageSrc> sources;
     private int selectedPosition = 0;
+    private boolean isOnScreen;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -147,4 +148,19 @@ public class SlideshowDialogFragment extends DialogFragment {
         }
     }
 
+    @Override
+    public int show(FragmentTransaction transaction, String tag) {
+        isOnScreen = true;
+        return super.show(transaction, tag);
+    }
+
+    @Override
+    public void onDetach() {
+        isOnScreen = false;
+        super.onDetach();
+    }
+
+    public boolean isOnScreen() {
+        return isOnScreen;
+    }
 }
